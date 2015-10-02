@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ServiceTest.iml" filepath="$PROJECT_DIR$/ServiceTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/AndroidServicesTest.iml" filepath="$PROJECT_DIR$/AndroidServicesTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/Services/Services.iml" filepath="$PROJECT_DIR$/Services/Services.iml" />
     </modules>
   </component>
