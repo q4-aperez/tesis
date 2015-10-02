@@ -21,6 +21,10 @@
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait" />
+
+        <service android:name=".InformationService" />
+
+        <receiver android:name=".ServiceReceiver" />
     </application>
 
 </manifest>

@@ -1,25 +1,23 @@
 package edu.aperez.webmobilegroupchat;
 
+import android.app.Service;
 import android.content.Intent;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
-import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.content.IntentFilter;
+import android.os.BatteryManager;
+import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.Toast;
 
 import com.codebutler.android_websockets.WebSocketClient;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -28,70 +26,31 @@ import info.androidhive.webgroupchat.other.Message;
 import info.androidhive.webgroupchat.other.Utils;
 import info.androidhive.webgroupchat.other.WsConfig;
 
-/**
- * Created by alexperez on 27/09/2015.
- */
-public class MainActivity extends AppCompatActivity {
-    // LogCat tag
-    private static final String TAG = MainActivity.class.getSimpleName();
-
-    private Button btnSend;
-    private EditText inputMsg;
-
+public class InformationService extends Service {
+    //    private final IBinder mBinder = new MyBinder();
+    private ArrayList<String> list = new ArrayList<String>();
     private WebSocketClient client;
-
-    // Chat messages list adapter
-    private MessagesListAdapter adapter;
-    private List<Message> listMessages;
-    private ListView listViewMessages;
-
     private Utils utils;
-
     // Client name
-    private String name = null;
-
+    private String name = "Android_Device";
     // JSON flags to identify the kind of JSON response
     private static final String TAG_SELF = "self", TAG_NEW = "new",
             TAG_MESSAGE = "message", TAG_EXIT = "exit";
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        btnSend = (Button) findViewById(R.id.btnSend);
-        inputMsg = (EditText) findViewById(R.id.inputMsg);
-        listViewMessages = (ListView) findViewById(R.id.list_view_messages);
+    public void onCreate() {
+        super.onCreate();
 
         utils = new Utils(getApplicationContext());
+        initializeWebSocket();
+    }
 
-        // Getting the person name from previous screen
-        Intent i = getIntent();
-        name = i.getStringExtra("name");
-
-        btnSend.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                // Sending message to web socket server
-                sendMessageToServer(utils.getSendMessageJSON(inputMsg.getText()
-                        .toString()));
-
-                // Clearing the input filed once message was sent
-                inputMsg.setText("");
-            }
-        });
-
-        listMessages = new ArrayList<Message>();
-
-        adapter = new MessagesListAdapter(this, listMessages);
-        listViewMessages.setAdapter(adapter);
-
+    private void initializeWebSocket() {
         /**
          * Creating web socket client. This will have callback methods
          * */
-        client = new WebSocketClient(URI.create(WsConfig.URL_WEBSOCKET
-                + name), new WebSocketClient.Listener() {
+        client = new WebSocketClient(URI.create(WsConfig.URL_WEBSOCKET + name), new WebSocketClient.Listener() {
             @Override
             public void onConnect() {
 
@@ -110,8 +69,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onMessage(byte[] data) {
-                Log.d(TAG, String.format("Got binary message! %s",
-                        bytesToHex(data)));
+                Log.d(TAG, String.format("Got binary message! %s", bytesToHex(data)));
 
                 // Message will be in JSON format
                 parseMessage(bytesToHex(data));
@@ -123,8 +81,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDisconnect(int code, String reason) {
 
-                String message = String.format(Locale.US,
-                        "Disconnected! Code: %d Reason: %s", code, reason);
+                String message = String.format(Locale.US, "Disconnected! Code: %d Reason: %s", code, reason);
 
                 showToast(message);
 
@@ -144,13 +101,71 @@ public class MainActivity extends AppCompatActivity {
         client.connect();
     }
 
-    /**
-     * Method to send message to web socket server
-     * */
-    private void sendMessageToServer(String message) {
-        if (client != null && client.isConnected()) {
-            client.send(message);
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = registerReceiver(null, ifilter);
+
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+        float batteryPct = level / (float) scale;
+
+        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL;
+        String chargeStatus;
+        if (isCharging)
+            chargeStatus = "charging";
+        else
+            chargeStatus = "discharging";
+
+        String deviceInfo = utils.getSendMessageJSON(getInfo() + "\nBattery " + (int) (batteryPct * 100) + "% and " + chargeStatus);
+        sendMessageToServer(deviceInfo);
+        Log.e("HOLA", "Servicio activado");
+        return Service.START_NOT_STICKY;
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    private String getInfo() {
+        StringBuffer sb = new StringBuffer();
+        if (new File("/proc/cpuinfo").exists()) {
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(new File("/proc/cpuinfo")));
+                String aLine;
+                while ((aLine = br.readLine()) != null) {
+                    if (aLine.contains("processor") || aLine.contains("bogomips"))
+                        sb.append(aLine + "\n");
+                }
+                if (br != null) {
+                    br.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+        return sb.toString();
+    }
+
+//    @Override
+//    public IBinder onBind(Intent arg0) {
+//        return mBinder;
+//    }
+
+//    public class MyBinder extends Binder {
+//        LocalWordService getService() {
+//            return LocalWordService.this;
+//        }
+//    }
+
+    public List<String> getWordList() {
+        return list;
     }
 
     /**
@@ -159,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
      * person. flag = new, a new person joined the conversation. flag = message,
      * a new message received from server. flag = exit, somebody left the
      * conversation.
-     * */
+     */
     private void parseMessage(final String msg) {
 
         try {
@@ -221,60 +236,35 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        if(client != null & client.isConnected()){
-            client.disconnect();
-        }
-    }
-
     /**
      * Appending message to list view
-     * */
+     */
     private void appendMessage(final Message m) {
-        runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                listMessages.add(m);
-
-                adapter.notifyDataSetChanged();
-
-                // Playing device's notification
-                playBeep();
-            }
-        });
+//        runOnUiThread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                listMessages.add(m);
+//
+//                adapter.notifyDataSetChanged();
+//
+//                // Playing device's notification
+//                playBeep();
+//            }
+//        });
     }
 
     private void showToast(final String message) {
 
-        runOnUiThread(new Runnable() {
+//        runOnUiThread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                Toast.makeText(getApplicationContext(), message,
+//                        Toast.LENGTH_LONG).show();
+//            }
+//        });
 
-            @Override
-            public void run() {
-                Toast.makeText(getApplicationContext(), message,
-                        Toast.LENGTH_LONG).show();
-            }
-        });
-
-    }
-
-    /**
-     * Plays device's default notification sound
-     * */
-    public void playBeep() {
-
-        try {
-            Uri notification = RingtoneManager
-                    .getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(),
-                    notification);
-            r.play();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
@@ -288,4 +278,14 @@ public class MainActivity extends AppCompatActivity {
         }
         return new String(hexChars);
     }
+
+    /**
+     * Method to send message to web socket server
+     * */
+    private void sendMessageToServer(String message) {
+        if (client != null && client.isConnected()) {
+            client.send(message);
+        }
+    }
+
 }
