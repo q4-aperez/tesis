@@ -5,6 +5,7 @@ import android.os.HandlerThread;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
+
 import org.apache.http.*;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.message.BasicLineParser;
@@ -15,6 +16,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,15 +31,15 @@ import java.util.List;
 public class WebSocketClient {
     private static final String TAG = "WebSocketClient";
 
-    private URI                      mURI;
-    private Listener                 mListener;
-    private Socket                   mSocket;
-    private Thread                   mThread;
-    private HandlerThread            mHandlerThread;
-    private Handler                  mHandler;
+    private URI mURI;
+    private Listener mListener;
+    private Socket mSocket;
+    private Thread mThread;
+    private HandlerThread mHandlerThread;
+    private Handler mHandler;
     private List<BasicNameValuePair> mExtraHeaders;
-    private HybiParser               mParser;
-    private boolean                  mConnected;
+    private HybiParser mParser;
+    private boolean mConnected;
 
     private final Object mSendLock = new Object();
 
@@ -48,11 +50,11 @@ public class WebSocketClient {
     }
 
     public WebSocketClient(URI uri, Listener listener, List<BasicNameValuePair> extraHeaders) {
-        mURI          = uri;
-        mListener     = listener;
+        mURI = uri;
+        mListener = listener;
         mExtraHeaders = extraHeaders;
-        mConnected    = false;
-        mParser       = new HybiParser(this);
+        mConnected = false;
+        mParser = new HybiParser(this);
 
         mHandlerThread = new HandlerThread("websocket-thread");
         mHandlerThread.start();
@@ -242,9 +244,11 @@ public class WebSocketClient {
             public void run() {
                 try {
                     synchronized (mSendLock) {
-                        OutputStream outputStream = mSocket.getOutputStream();
-                        outputStream.write(frame);
-                        outputStream.flush();
+                        if (mSocket != null) {
+                            OutputStream outputStream = mSocket.getOutputStream();
+                            outputStream.write(frame);
+                            outputStream.flush();
+                        }
                     }
                 } catch (IOException e) {
                     mListener.onError(e);
@@ -255,9 +259,13 @@ public class WebSocketClient {
 
     public interface Listener {
         public void onConnect();
+
         public void onMessage(String message);
+
         public void onMessage(byte[] data);
+
         public void onDisconnect(int code, String reason);
+
         public void onError(Exception error);
     }
 
