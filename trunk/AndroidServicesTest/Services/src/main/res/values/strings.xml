@@ -1,5 +1,0 @@
-<resources>
-    <string name="app_name">ServiceTest</string>
-    <string name="service_name">Local Word</string>
-    <string name="hello">Hello!</string>
-</resources>
