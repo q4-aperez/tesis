@@ -5,15 +5,15 @@ var sessionId = '';
 var name = '';
 
 // socket connection url and port
-var socket_url = '192.168.0.7';
+var socket_url = '192.168.0.2';
 var port = '8080';
 
 $(document).ready(function() {
 
-	$("#form_submit, #form_send_message").submit(function(e) {
-		e.preventDefault();
-		join();
-	});
+	// $("#form_submit, #form_send_message").submit(function(e) {
+	// e.preventDefault();
+	join();
+	// });
 });
 
 var webSocket;
@@ -23,16 +23,16 @@ var webSocket;
  */
 function join() {
 	// Checking person name
-	if ($('#input_name').val().trim().length <= 0) {
-		alert('Enter your name');
-	} else {
-		name = $('#input_name').val().trim();
+	// if ($('#input_name').val().trim().length <= 0) {
+	// alert('Enter your name');
+	// } else {
+	name = "admin";// $('#input_name').val().trim();
 
-		$('#prompt_name_container').fadeOut(1000, function() {
-			// opening socket connection
-			openSocket();
-		});
-	}
+	$('#prompt_name_container').fadeOut(1000, function() {
+		// opening socket connection
+		openSocket();
+	});
+	// }
 
 	return false;
 }
@@ -67,7 +67,7 @@ function openSocket() {
 	};
 
 	webSocket.onclose = function(event) {
-		
+
 	};
 }
 
@@ -78,11 +78,27 @@ function send() {
 	var message = $('#input_message').val();
 
 	if (message.trim().length > 0) {
-		sendMessageToServer('message', message);		
+		sendMessageToServer('message', message);
 	} else {
 		alert('Please enter message to send!');
 	}
 
+}
+
+function sendJob() {
+	var value = $('#job_value').val();
+	var job = $("#job_name option:selected").val();
+
+	if (value.trim().length > 0 && isNumeric(value)) {
+		sendMessageToServer('message', job + ";" + Math.floor(value));
+	} else {
+		alert('Please enter a value for the job!');
+	}
+
+}
+
+function isNumeric(value) {
+	return !isNaN(Math.floor(value));
 }
 
 /**

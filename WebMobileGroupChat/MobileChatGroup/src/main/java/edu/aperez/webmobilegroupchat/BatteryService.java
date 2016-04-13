@@ -54,6 +54,6 @@ public class BatteryService extends Service {
             }
         }, 1000);
 
-        return Service.START_NOT_STICKY;
+        return Service.START_STICKY;
     }
 }

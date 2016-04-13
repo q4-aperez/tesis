@@ -30,7 +30,7 @@ public class ProcessorService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         client.send(utils.getSendMessageJSON(getInfo()));
-        return Service.START_NOT_STICKY;
+        return Service.START_STICKY;
     }
 
     @Nullable

@@ -1,6 +1,9 @@
-package info.androidhive.webgroupchat.other;
+package edu.aperez.webmobilegroupchat;
 
-import android.util.Log;
+import android.app.Service;
+import android.content.Intent;
+import android.os.IBinder;
+import android.support.annotation.Nullable;
 
 import com.codebutler.android_websockets.WebSocketClient;
 
@@ -8,19 +11,45 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
-import java.util.Locale;
+
+import edu.aperez.webmobilegroupchat.job.Factorial;
+import edu.aperez.webmobilegroupchat.job.Fibonacci;
+import info.androidhive.webgroupchat.other.Utils;
+import info.androidhive.webgroupchat.other.WsConfig;
 
 /**
- * Created by alex.perez on 29/10/2015.
+ * Created by alexperez on 12/01/2016.
  */
-public class ConnectionUtils {
+public class DeviceInformationService extends Service {
 
+    private Utils utils;
+    private WebSocketClient client;
     private static final String TAG_SELF = "self", TAG_NEW = "new",
             TAG_MESSAGE = "message", TAG_EXIT = "exit";
 
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 
-    public static WebSocketClient initializeWebSocket(String name) {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        utils = new Utils(this);
+
+        client = initializeWebSocket(Installation.id(this));
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    public WebSocketClient initializeWebSocket(String name) {
         /**
          * Creating web socket client. This will have callback methods
          * */
@@ -55,12 +84,12 @@ public class ConnectionUtils {
             @Override
             public void onDisconnect(int code, String reason) {
 
-                String message = String.format(Locale.US, "Disconnected! Code: %d Reason: %s", code, reason);
+//                String message = String.format(Locale.US, "Disconnected! Code: %d Reason: %s", code, reason);
 
 //                showToast(message);
 
                 // clear the session id from shared preferences
-//                utils.storeSessionId(null);
+                utils.storeSessionId(null);
             }
 
             @Override
@@ -84,7 +113,7 @@ public class ConnectionUtils {
      * a new message received from server. flag = exit, somebody left the
      * conversation.
      */
-    private static void parseMessage(final String msg) {
+    private void parseMessage(final String msg) {
 
         try {
             JSONObject jObj = new JSONObject(msg);
@@ -98,43 +127,42 @@ public class ConnectionUtils {
                 String sessionId = jObj.getString("sessionId");
 
                 // Save the session id in shared preferences
-//                utils.storeSessionId(sessionId);
+                utils.storeSessionId(sessionId);
 //
 //                Log.e(TAG, "Your session id: " + utils.getSessionId());
 
             } else if (flag.equalsIgnoreCase(TAG_NEW)) {
                 // If the flag is 'new', new person joined the room
-                String name = jObj.getString("name");
-                String message = jObj.getString("message");
+//                String name = jObj.getString("name");
+//                String message = jObj.getString("message");
 
                 // number of people online
-                String onlineCount = jObj.getString("onlineCount");
+//                String onlineCount = jObj.getString("onlineCount");
 
 //                showToast(name + message + ". Currently " + onlineCount
 //                        + " people online!");
 
             } else if (flag.equalsIgnoreCase(TAG_MESSAGE)) {
                 // if the flag is 'message', new message received
-//                String fromName = name;
-                String message = jObj.getString("message");
-                String sessionId = jObj.getString("sessionId");
-                boolean isSelf = true;
-
-                // Checking if the message was sent by you
-//                if (!sessionId.equals(utils.getSessionId())) {
-//                    fromName = jObj.getString("name");
-//                    isSelf = false;
-//                }
-//
-//                Message m = new Message(fromName, message, isSelf);
-//
-//                // Appending the message to chat list
-//                appendMessage(m);
+                if (jObj.getString("name").equals("admin")) {
+                    String[] job = jObj.getString("message").split(";");
+                    Integer value = Integer.valueOf(job[1]);
+                    switch (job[0]) {
+                        case "fibonacci":
+                            Long fibResult = new Fibonacci().calculate(value);
+                            client.send(utils.getSendMessageJSON("Resultado: " + fibResult));
+                            break;
+                        case "factorial":
+                            Long facResult = Factorial.calculate(value);
+                            client.send(utils.getSendMessageJSON("Resultado: " + facResult));
+                            break;
+                    }
+                }
 
             } else if (flag.equalsIgnoreCase(TAG_EXIT)) {
                 // If the flag is 'exit', somebody left the conversation
-                String name = jObj.getString("name");
-                String message = jObj.getString("message");
+//                String name = jObj.getString("name");
+//                String message = jObj.getString("message");
 
 //                showToast(name + message);
             }
