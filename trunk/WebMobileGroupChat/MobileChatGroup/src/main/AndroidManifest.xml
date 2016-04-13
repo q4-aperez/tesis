@@ -23,6 +23,8 @@
         <service android:name=".BatteryService" />
 
         <receiver android:name=".ProcessorReceiver" />
+
+        <service android:name=".DeviceInformationService" />
     </application>
 
 </manifest>
