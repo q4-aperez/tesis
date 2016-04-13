@@ -85,16 +85,30 @@ function send() {
 
 }
 
-function sendJob() {
+var jobsList = [];
+function addJob() {
 	var value = $('#job_value').val();
 	var job = $("#job_name option:selected").val();
 
-	if (value.trim().length > 0 && isNumeric(value)) {
-		sendMessageToServer('message', job + ";" + Math.floor(value));
+	if (value.trim().length > 0 && isNumeric(value)) {		
+		var li = '<li><span class="name">' + job + '</span> ('
+				+ value + ')</li>';
+		$('#jobs').append(li);
+		jobsList.push({job: job, value: value});
 	} else {
 		alert('Please enter a value for the job!');
 	}
 
+}
+
+function sendJobs() {
+	for (var i = 0; i < jobsList.length; i++) {
+		var job = jobsList[i];
+		sendMessageToServer('message', job.job + ";" + Math.floor(job.value));
+	}
+	$('#jobs').html('');
+	alert('Jobs sent!');
+	jobsList = [];
 }
 
 function isNumeric(value) {
