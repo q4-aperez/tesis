@@ -6,6 +6,8 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 
 import com.codebutler.android_websockets.WebSocketClient;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,6 +16,7 @@ import java.net.URI;
 
 import edu.aperez.webmobilegroupchat.job.Factorial;
 import edu.aperez.webmobilegroupchat.job.Fibonacci;
+import edu.aperez.webmobilegroupchat.model.Message;
 import info.androidhive.webgroupchat.other.Utils;
 import info.androidhive.webgroupchat.other.WsConfig;
 
@@ -145,18 +148,25 @@ public class DeviceInformationService extends Service {
             } else if (flag.equalsIgnoreCase(TAG_MESSAGE)) {
                 // if the flag is 'message', new message received
                 if (jObj.getString("name").equals("admin")) {
-                    String[] job = jObj.getString("message").split(";");
-                    Integer value = Integer.valueOf(job[1]);
-                    switch (job[0]) {
-                        case "fibonacci":
-                            Long fibResult = new Fibonacci().calculate(value);
-                            client.send(utils.getSendMessageJSON("Resultado: " + fibResult));
-                            break;
-                        case "factorial":
-                            Long facResult = Factorial.calculate(value);
-                            client.send(utils.getSendMessageJSON("Resultado: " + facResult));
-                            break;
+                    GsonBuilder builder = new GsonBuilder();
+                    Gson gson = builder.create();
+                    try {
+                        Message message = gson.fromJson(jObj.toString(), Message.class);
+                    } catch (Exception e){
+                        e.printStackTrace();
                     }
+//                    String[] job = jObj.getString("message").split(";");
+//                    Integer value = Integer.valueOf(job[1]);
+//                    switch (job[0]) {
+//                        case "fibonacci":
+//                            Long fibResult = new Fibonacci().calculate(value);
+//                            client.send(utils.getSendMessageJSON("Resultado: " + fibResult));
+//                            break;
+//                        case "factorial":
+//                            Long facResult = Factorial.calculate(value);
+//                            client.send(utils.getSendMessageJSON("Resultado: " + facResult));
+//                            break;
+//                    }
                 }
 
             } else if (flag.equalsIgnoreCase(TAG_EXIT)) {

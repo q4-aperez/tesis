@@ -1,22 +1,25 @@
 package edu.aperez.webmobilegroupchat;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 
 /**
  * Created by alexperez on 27/09/2015.
  */
 public class MainActivity extends AppCompatActivity {
 
+    private RecyclerView jobsList;
+    private JobsAdapter jobsAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        setupJobsList();
 
 //        //Processor receiver
 //        AlarmManager service = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -35,5 +38,20 @@ public class MainActivity extends AppCompatActivity {
 //        registerReceiver(batteryReceiver, intentFilter);
 
         startService(new Intent(this, DeviceInformationService.class));
+    }
+
+    private void setupJobsList() {
+        jobsList = (RecyclerView) findViewById(R.id.jobs_list);
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        jobsList.setHasFixedSize(true);
+
+        // use a linear layout manager
+        jobsList.setLayoutManager(new LinearLayoutManager(this));
+
+        // specify an adapter
+        jobsAdapter = new JobsAdapter();
+        jobsList.setAdapter(jobsAdapter);
     }
 }
