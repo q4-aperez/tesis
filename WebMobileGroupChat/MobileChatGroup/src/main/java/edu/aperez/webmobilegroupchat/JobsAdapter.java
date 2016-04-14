@@ -8,6 +8,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import edu.aperez.webmobilegroupchat.model.Message;
+
 /**
  * Created by alexperez on 14/04/2016.
  */
@@ -48,9 +50,8 @@ public class JobsAdapter extends RecyclerView.Adapter<JobsAdapter.JobViewHolder>
         }
     }
 
-    public void addJobs(ArrayList<String> newJobs) {
-        int position = jobs.size()-1;
-        jobs.addAll(newJobs);
-        notifyItemRangeInserted(position, newJobs.size());
+    public synchronized void addJob(Message job) {
+        jobs.add(job);
+        notifyItemInserted(jobs.size()-1);
     }
 }

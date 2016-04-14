@@ -1,15 +1,22 @@
 package edu.aperez.webmobilegroupchat;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.widget.Toast;
+
+import edu.aperez.webmobilegroupchat.model.Message;
 
 /**
  * Created by alexperez on 27/09/2015.
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DeviceInformationService.JobCallback {
 
     private RecyclerView jobsList;
     private JobsAdapter jobsAdapter;
@@ -37,7 +44,9 @@ public class MainActivity extends AppCompatActivity {
 //        BatteryReceiver batteryReceiver = new BatteryReceiver();
 //        registerReceiver(batteryReceiver, intentFilter);
 
-        startService(new Intent(this, DeviceInformationService.class));
+        Intent serviceIntent = new Intent(this, DeviceInformationService.class);
+        startService(serviceIntent);
+        bindService(serviceIntent, mConnection, Context.BIND_AUTO_CREATE); //Binding to the service!
     }
 
     private void setupJobsList() {
@@ -54,4 +63,38 @@ public class MainActivity extends AppCompatActivity {
         jobsAdapter = new JobsAdapter();
         jobsList.setAdapter(jobsAdapter);
     }
+
+    @Override
+    public void updateClient(Message job) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this, "updateClient called", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private DeviceInformationService myService;
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            Toast.makeText(MainActivity.this, "onServiceConnected called", Toast.LENGTH_SHORT).show();
+            // We've binded to LocalService, cast the IBinder and get LocalService instance
+            DeviceInformationService.LocalBinder binder = (DeviceInformationService.LocalBinder) service;
+            myService = binder.getServiceInstance(); //Get instance of your service!
+            myService.registerClient(MainActivity.this); //Activity register in the service as client for callabcks!
+//            tvServiceState.setText("Connected to service...");
+//            tbStartTask.setEnabled(true);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            Toast.makeText(MainActivity.this, "onServiceDisconnected called", Toast.LENGTH_SHORT).show();
+//            tvServiceState.setText("Service disconnected");
+//            tbStartTask.setEnabled(false);
+        }
+    };
 }

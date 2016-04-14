@@ -16,6 +16,9 @@ public class Message {
     @SerializedName("message")
     private String message;
 
+    private String job;
+    private String value;
+
     public String getFlag() {
         return flag;
     }
@@ -46,5 +49,24 @@ public class Message {
 
     public void setMessage(String message) {
         this.message = message;
+        String[] data = message.split(";");
+        job = data[0];
+        value = data[1];
+    }
+
+    public String getJob() {
+        return job;
+    }
+
+    public void setJob(String job) {
+        this.job = job;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 }
