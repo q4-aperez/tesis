@@ -1,2 +1,2 @@
-include ':MobileChatGroup'
+include ':GridApp'
 include ':androidwebsocketsmaster'

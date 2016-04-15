@@ -107,7 +107,7 @@ function sendJobs() {
 		sendMessageToServer('message', job.job + ";" + Math.floor(job.value));
 	}
 	$('#jobs').html('');
-	alert('Jobs sent!');
+//	alert('Jobs sent!');
 	jobsList = [];
 }
 
