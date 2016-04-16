@@ -22,19 +22,8 @@ var webSocket;
  * Connecting to socket
  */
 function join() {
-	// Checking person name
-	// if ($('#input_name').val().trim().length <= 0) {
-	// alert('Enter your name');
-	// } else {
-	name = "admin";// $('#input_name').val().trim();
-
-	$('#prompt_name_container').fadeOut(1000, function() {
-		// opening socket connection
-		openSocket();
-	});
-	// }
-
-	return false;
+	name = "admin";
+	openSocket();
 }
 
 /**
@@ -47,14 +36,13 @@ function openSocket() {
 	}
 
 	// Create a new instance of the websocket
-	webSocket = new WebSocket("ws://" + socket_url + ":" + port
-			+ "/WebMobileGroupChatServer/chat?name=" + name);
+	webSocket = new WebSocket("ws://" + socket_url + ":" + port + "/WebMobileGroupChatServer/chat?name=" + name);
 
 	/**
 	 * Binds functions to the listeners for the websocket.
 	 */
 	webSocket.onopen = function(event) {
-		$('#message_container').fadeIn();
+		// $('#message_container').fadeIn();
 
 		if (event.data === undefined)
 			return;
@@ -90,11 +78,14 @@ function addJob() {
 	var value = $('#job_value').val();
 	var job = $("#job_name option:selected").val();
 
-	if (value.trim().length > 0 && isNumeric(value)) {		
-		var li = '<li><span class="name">' + job + '</span> ('
-				+ value + ')</li>';
+	if (value.trim().length > 0 && isNumeric(value)) {
+		var li = '<li tabindex="1"><span class="name">' + job + '</span> (' + value + ')</li>';
 		$('#jobs').append(li);
-		jobsList.push({job: job, value: value});
+		$('#jobs li').last().focus();
+		jobsList.push({
+			job : job,
+			value : value
+		});
 	} else {
 		alert('Please enter a value for the job!');
 	}
@@ -107,7 +98,7 @@ function sendJobs() {
 		sendMessageToServer('message', job.job + ";" + Math.floor(job.value));
 	}
 	$('#jobs').html('');
-//	alert('Jobs sent!');
+	// alert('Jobs sent!');
 	jobsList = [];
 }
 
@@ -150,19 +141,15 @@ function parseMessage(message) {
 		var new_name = 'You';
 
 		// number of people online
-		var online_count = jObj.onlineCount;
+		var online_count = jObj.onlineCount - 1;
 
-		$('p.online_count').html(
-				'Hello, <span class="green">' + name + '</span>. <b>'
-						+ online_count + '</b> people online right now')
-				.fadeIn();
+		$('p.online_count').html('Hello, <span class="green">' + name + '</span>. <b>' + online_count + '</b> devices online right now').fadeIn();
 
 		if (jObj.sessionId != sessionId) {
 			new_name = jObj.name;
 		}
 
-		var li = '<li class="new"><span class="name">' + new_name + '</span> '
-				+ jObj.message + '</li>';
+		var li = '<li class="new"><span class="name">' + new_name + '</span> ' + jObj.message + '</li>';
 		$('#messages').append(li);
 
 		$('#input_message').val('');
@@ -171,43 +158,45 @@ function parseMessage(message) {
 		// if the json flag is 'message', it means somebody sent the chat
 		// message
 
-		var from_name = 'You';
-
-		if (jObj.sessionId != sessionId) {
-			from_name = jObj.name;
+		if (jObj.sessionId == sessionId) {
+			var li = '<li tabindex="1">' + jObj.message + '</li>';
+			// appending the job to sent list
+			appendSentJob(li);
+		} else {
+			var li = '<li tabindex="1"><span class="name">' + jObj.name + '</span> ' + jObj.message + '</li>';
+			// appending the chat message to list
+			appendChatMessage(li);
 		}
-
-		var li = '<li><span class="name">' + from_name + '</span> '
-				+ jObj.message + '</li>';
-
-		// appending the chat message to list
-		appendChatMessage(li);
-
-		$('#input_message').val('');
-
 	} else if (jObj.flag == 'exit') {
 		// if the json flag is 'exit', it means somebody left the chat room
-		var li = '<li class="exit"><span class="name red">' + jObj.name
-				+ '</span> ' + jObj.message + '</li>';
+		var li = '<li class="exit"><span class="name red">' + jObj.name + '</span> ' + jObj.message + '</li>';
 
 		var online_count = jObj.onlineCount;
 
-		$('p.online_count').html(
-				'Hello, <span class="green">' + name + '</span>. <b>'
-						+ online_count + '</b> people online right now');
+		$('p.online_count').html('Hello, <span class="green">' + name + '</span>. <b>' + online_count + '</b> people online right now');
 
 		appendChatMessage(li);
 	}
 }
 
 /**
- * Appending the chat message to list
+ * Appending the job message to jobs list
  */
 function appendChatMessage(li) {
 	$('#messages').append(li);
 
 	// scrolling the list to bottom so that new message will be visible
-	$('#messages').scrollTop($('#messages').height());
+	$('#messages li').last().focus();
+}
+
+/**
+ * Appending the chat message to list
+ */
+function appendSentJob(li) {
+	$('#sent_jobs').append(li);
+
+	// scrolling the list to bottom so that new message will be visible
+	$('#sent_jobs li').last().focus();
 }
 
 /**

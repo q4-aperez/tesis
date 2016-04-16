@@ -17,18 +17,10 @@
 	<div class="body_container">
 
 		<div id="header">
-			<h1>Android WebSockets Chat Application</h1>
+			<h1>Grid Application</h1>
 			<p class='online_count'>
-				<b>23</b> people online right now
+				<b>23</b> devices online right now
 			</p>
-		</div>
-
-		<div id="prompt_name_container" class="box_shadow">
-			<p>Enter your name</p>
-			<form id="form_submit" method="post">
-				<input type="text" id="input_name" /> <input type="submit"
-					value="JOIN" id="btn_join">
-			</form>
 		</div>
 
 		<div id="message_container">
@@ -44,32 +36,26 @@
 
 			<div id="contentBox" style="margin: 0px auto; width: 100%">
 
-				<!-- columns divs, float left, no margin so there is no space between column, width=1/3 -->
+				<div id="column2" style="float: left; margin: 0; width: 30%;">
+					<ul id="jobs">
+					</ul>
+					<input type="button" id="btn_send_jobs" onclick="sendJobs();"
+						value="Send Jobs" />
+				</div>
+
 				<div id="column1" style="float: left; margin: 0; width: 70%;">
 					<ul id="messages">
 					</ul>
-					<!-- 					<div id="input_message_container"> -->
-					<!-- 						<form id="form_send_message" method="post" action="#"> -->
-					<!-- 							<input type="text" id="input_message" -->
-					<!-- 								placeholder="Type your message here..." /> <input type="submit" -->
-					<!-- 								id="btn_send" onclick="send();" value="Send" /> -->
-					<!-- 							<div class="clear"></div> -->
-					<!-- 						</form> -->
-					<!-- 					</div> -->
 					<div>
 						<input type="button" onclick="closeSocket();"
 							value="Leave Chat Room" id="btn_close" />
 					</div>
 				</div>
-
-				<div id="column2" style="float: left; margin: 0; width: 30%;">
-					<ul id="jobs">
-					</ul>
-					<input type="button" id="btn_send_jobs"
-					onclick="sendJobs();" value="Send Jobs" />
-				</div>
 			</div>
-
+			<div id="sent_jobs_container" style="margin: 0px auto; width: 100%">
+				<ul id="sent_jobs">
+				</ul>
+			</div>
 		</div>
 </body>
 </html>

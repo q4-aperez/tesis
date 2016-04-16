@@ -6,6 +6,7 @@ import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
+import org.apache.tomcat.websocket.WsSession;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -56,13 +58,30 @@ public class SocketServer {
 		String name = "";
 
 		if (queryParams.containsKey("name")) {
-
 			// Getting client name via query param
 			name = queryParams.get("name");
 			try {
 				name = URLDecoder.decode(name, "UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
+			}
+
+			if (nameSessionPair.containsValue(name)) {
+				System.out.println(name + " is already logged in");
+
+				Iterator it = nameSessionPair.entrySet().iterator();
+				while (it.hasNext()) {
+					Map.Entry pair = (Map.Entry) it.next();
+					if (pair.getValue().equals(name)) {
+						it.remove(); // avoids a ConcurrentModificationException
+					}
+				}
+				Iterator<Session> it2 = sessions.iterator();
+				while (it2.hasNext()) {
+					if (it2.next().getQueryString().contains(name)) {
+						it2.remove();
+					}
+				}
 			}
 
 			// Mapping client name and session id
