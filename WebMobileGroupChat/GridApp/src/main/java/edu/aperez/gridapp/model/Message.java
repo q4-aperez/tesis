@@ -1,4 +1,4 @@
-package edu.aperez.webmobilegroupchat.model;
+package edu.aperez.gridapp.model;
 
 import android.text.TextUtils;
 

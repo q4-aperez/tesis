@@ -1,8 +1,9 @@
-package edu.aperez.webmobilegroupchat;
+package edu.aperez.gridapp;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
@@ -15,7 +16,7 @@ import org.json.JSONObject;
 
 import java.net.URI;
 
-import edu.aperez.webmobilegroupchat.model.Message;
+import edu.aperez.gridapp.model.Message;
 import info.androidhive.webgroupchat.other.Utils;
 import info.androidhive.webgroupchat.other.WsConfig;
 
@@ -31,7 +32,8 @@ public class DeviceInformationService extends Service {
             TAG_MESSAGE = "message", TAG_EXIT = "exit";
 
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    private final IBinder mBinder = new LocalBinder();;
+    private final IBinder mBinder = new LocalBinder();
+    ;
 
     @Override
     public void onCreate() {
@@ -39,7 +41,7 @@ public class DeviceInformationService extends Service {
 
         utils = new Utils(this);
 
-        client = initializeWebSocket(Installation.id(this));
+        client = initializeWebSocket(Build.MODEL);
     }
 
     @Override
@@ -65,7 +67,7 @@ public class DeviceInformationService extends Service {
         WebSocketClient client = new WebSocketClient(URI.create(WsConfig.URL_WEBSOCKET + name), new WebSocketClient.Listener() {
             @Override
             public void onConnect() {
-
+                activity.showSnackbar(R.string.socket_connected);
             }
 
             /**
@@ -73,16 +75,12 @@ public class DeviceInformationService extends Service {
              * */
             @Override
             public void onMessage(String message) {
-//                Log.d(TAG, String.format("Got string message! %s", message));
-
                 parseMessage(message);
 
             }
 
             @Override
             public void onMessage(byte[] data) {
-//                Log.d(TAG, String.format("Got binary message! %s", bytesToHex(data)));
-
                 // Message will be in JSON format
                 parseMessage(bytesToHex(data));
             }
@@ -93,12 +91,6 @@ public class DeviceInformationService extends Service {
             @Override
             public void onDisconnect(int code, String reason) {
 
-//                String message = String.format(Locale.US, "Disconnected! Code: %d Reason: %s", code, reason);
-
-//                showToast(message);
-
-                // clear the session id from shared preferences
-                utils.storeSessionId(null);
             }
 
             @Override
@@ -137,19 +129,8 @@ public class DeviceInformationService extends Service {
 
                 // Save the session id in shared preferences
                 utils.storeSessionId(sessionId);
-//
+
 //                Log.e(TAG, "Your session id: " + utils.getSessionId());
-
-            } else if (flag.equalsIgnoreCase(TAG_NEW)) {
-                // If the flag is 'new', new person joined the room
-//                String name = jObj.getString("name");
-//                String message = jObj.getString("message");
-
-                // number of people online
-//                String onlineCount = jObj.getString("onlineCount");
-
-//                showToast(name + message + ". Currently " + onlineCount
-//                        + " people online!");
 
             } else if (flag.equalsIgnoreCase(TAG_MESSAGE)) {
                 // if the flag is 'message', new message received
@@ -162,26 +143,8 @@ public class DeviceInformationService extends Service {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-//                    String[] job = jObj.getString("message").split(";");
-//                    Integer value = Integer.valueOf(job[1]);
-//                    switch (job[0]) {
-//                        case "fibonacci":
-//                            Long fibResult = new Fibonacci().calculate(value);
-//                            client.send(utils.getSendMessageJSON("Resultado: " + fibResult));
-//                            break;
-//                        case "factorial":
-//                            Long facResult = Factorial.calculate(value);
-//                            client.send(utils.getSendMessageJSON("Resultado: " + facResult));
-//                            break;
-//                    }
                 }
 
-            } else if (flag.equalsIgnoreCase(TAG_EXIT)) {
-                // If the flag is 'exit', somebody left the conversation
-//                String name = jObj.getString("name");
-//                String message = jObj.getString("message");
-
-//                showToast(name + message);
             }
 
         } catch (JSONException e) {
@@ -204,14 +167,34 @@ public class DeviceInformationService extends Service {
         client.send(jsonMessage);
     }
 
+    public boolean isConnected() {
+        return client.isConnected();
+    }
+
     public interface JobCallback {
         public void updateClient(Message job);
+
+        public void toggleConnect(boolean isConnected);
+
+        public void showSnackbar(int resId);
     }
 
     //returns the instance of the service
     public class LocalBinder extends Binder {
-        public DeviceInformationService getServiceInstance(){
+        public DeviceInformationService getServiceInstance() {
             return DeviceInformationService.this;
         }
+    }
+
+    public void disconnectClient() {
+        client.disconnect();
+        utils.storeSessionId(null);
+        activity.showSnackbar(R.string.socket_disconnected);
+        activity.toggleConnect(false);
+    }
+
+    public void connectClient() {
+        client.connect();
+        activity.toggleConnect(true);
     }
 }

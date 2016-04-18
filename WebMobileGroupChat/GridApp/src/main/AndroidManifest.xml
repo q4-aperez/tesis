@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="edu.aperez.webmobilegroupchat">
+    package="edu.aperez.gridapp">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -9,7 +9,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name="edu.aperez.gridapp.MainActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -18,13 +18,13 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".ProcessorService" />
+        <service android:name="edu.aperez.gridapp.ProcessorService" />
 
-        <service android:name=".BatteryService" />
+        <service android:name="edu.aperez.gridapp.BatteryService" />
 
-        <receiver android:name=".ProcessorReceiver" />
+        <receiver android:name="edu.aperez.gridapp.ProcessorReceiver" />
 
-        <service android:name=".DeviceInformationService" />
+        <service android:name="edu.aperez.gridapp.DeviceInformationService" />
     </application>
 
 </manifest>

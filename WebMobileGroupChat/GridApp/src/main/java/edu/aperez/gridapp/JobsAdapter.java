@@ -1,4 +1,4 @@
-package edu.aperez.webmobilegroupchat;
+package edu.aperez.gridapp;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -8,7 +8,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import edu.aperez.webmobilegroupchat.model.Message;
+import edu.aperez.gridapp.model.Message;
 
 /**
  * Created by alexperez on 14/04/2016.

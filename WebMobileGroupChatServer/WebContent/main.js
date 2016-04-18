@@ -137,7 +137,7 @@ function parseMessage(message) {
 		sessionId = jObj.sessionId;
 
 	} else if (jObj.flag == 'new') {
-		// if the flag is 'new', a client joined the chat room
+		// if the flag is 'new', a client joined grid
 		var new_name = 'You';
 
 		// number of people online
@@ -149,15 +149,12 @@ function parseMessage(message) {
 			new_name = jObj.name;
 		}
 
-		var li = '<li class="new"><span class="name">' + new_name + '</span> ' + jObj.message + '</li>';
+		var li = '<li class="new" tabindex="1"><span class="name">' + new_name + '</span> ' + jObj.message + '</li>';
 		$('#messages').append(li);
 
 		$('#input_message').val('');
 
 	} else if (jObj.flag == 'message') {
-		// if the json flag is 'message', it means somebody sent the chat
-		// message
-
 		if (jObj.sessionId == sessionId) {
 			var li = '<li tabindex="1">' + jObj.message + '</li>';
 			// appending the job to sent list
@@ -168,8 +165,8 @@ function parseMessage(message) {
 			appendChatMessage(li);
 		}
 	} else if (jObj.flag == 'exit') {
-		// if the json flag is 'exit', it means somebody left the chat room
-		var li = '<li class="exit"><span class="name red">' + jObj.name + '</span> ' + jObj.message + '</li>';
+		// if the json flag is 'exit', it means somebody left the grid
+		var li = '<li class="exit" tabindex="1"><span class="name red">' + jObj.name + '</span> ' + jObj.message + '</li>';
 
 		var online_count = jObj.onlineCount;
 

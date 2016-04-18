@@ -2,8 +2,16 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/activity_container"
     android:background="@drawable/tile_bg"
     android:orientation="vertical">
+
+    <Button
+        android:id="@+id/connect_button"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_margin="10dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:text="Current job"
+            android:text="@string/current_job"
             android:textColor="@android:color/white"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -39,6 +47,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_margin="20dp"
+        android:indeterminate="true"
         android:visibility="gone" />
 
     <android.support.v7.widget.RecyclerView
@@ -47,12 +56,4 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:scrollbars="vertical" />
-
-    <!--<TextView-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:layout_centerInParent="true"-->
-    <!--android:text="Services started!"-->
-    <!--android:textSize="16sp" />-->
-
 </LinearLayout>

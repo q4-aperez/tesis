@@ -1,4 +1,4 @@
-package edu.aperez.webmobilegroupchat.job;
+package edu.aperez.gridapp.job;
 
 /**
  * Created by alexperez on 12/01/2016.

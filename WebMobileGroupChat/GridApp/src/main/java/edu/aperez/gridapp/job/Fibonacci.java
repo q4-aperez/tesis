@@ -1,4 +1,4 @@
-package edu.aperez.webmobilegroupchat.job;
+package edu.aperez.gridapp.job;
 
 import java.util.HashMap;
 

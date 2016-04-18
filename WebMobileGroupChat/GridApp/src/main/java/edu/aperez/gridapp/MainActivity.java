@@ -1,4 +1,4 @@
-package edu.aperez.webmobilegroupchat;
+package edu.aperez.gridapp;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -8,6 +8,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -15,9 +17,9 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import edu.aperez.webmobilegroupchat.job.Factorial;
-import edu.aperez.webmobilegroupchat.job.Fibonacci;
-import edu.aperez.webmobilegroupchat.model.Message;
+import edu.aperez.gridapp.job.Factorial;
+import edu.aperez.gridapp.job.Fibonacci;
+import edu.aperez.gridapp.model.Message;
 import info.androidhive.webgroupchat.other.Constants;
 import info.androidhive.webgroupchat.other.Utils;
 
@@ -32,6 +34,9 @@ public class MainActivity extends AppCompatActivity implements DeviceInformation
     private DeviceInformationService myService;
     private Utils utils;
     private ProgressBar progressBar;
+    TextView connectButton;
+    boolean isConnected;
+    View view;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +44,8 @@ public class MainActivity extends AppCompatActivity implements DeviceInformation
         setContentView(R.layout.activity_main);
 
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
-
+        connectButton = (TextView) findViewById(R.id.connect_button);
+        view = findViewById(R.id.activity_container);
         setupJobsList();
 
 //        //Processor receiver
@@ -62,6 +68,20 @@ public class MainActivity extends AppCompatActivity implements DeviceInformation
         startService(serviceIntent);
         bindService(serviceIntent, mConnection, Context.BIND_AUTO_CREATE); //Binding to the service!
         utils = new Utils(this);
+
+        connectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (myService == null) {
+                    return;
+                }
+                if (isConnected) {
+                    myService.disconnectClient();
+                } else {
+                    myService.connectClient();
+                }
+            }
+        });
     }
 
     private void setupJobsList() {
@@ -87,12 +107,28 @@ public class MainActivity extends AppCompatActivity implements DeviceInformation
                 jobsAdapter.addJob(job);
 
                 if (!hasJobsPending) {
-//                    findViewById(R.id.current_job_data).setVisibility(View.VISIBLE);
                     hasJobsPending = true;
                     executePendingJobs();
                 }
             }
         });
+    }
+
+    @Override
+    public void toggleConnect(boolean isConnected) {
+        this.isConnected = isConnected;
+        if (isConnected) {
+            connectButton.setText(R.string.disconnect);
+            connectButton.setBackground(ContextCompat.getDrawable(this, R.drawable.red_button));
+        } else {
+            connectButton.setText(R.string.connect);
+            connectButton.setBackground(ContextCompat.getDrawable(this, R.drawable.green_button));
+        }
+    }
+
+    @Override
+    public void showSnackbar(int resId) {
+        Snackbar.make(view, resId, Snackbar.LENGTH_SHORT).show();
     }
 
     private void executePendingJobs() {
@@ -115,13 +151,12 @@ public class MainActivity extends AppCompatActivity implements DeviceInformation
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
-//            Toast.makeText(MainActivity.this, "onServiceConnected called", Toast.LENGTH_SHORT).show();
             // We've binded to LocalService, cast the IBinder and get LocalService instance
             DeviceInformationService.LocalBinder binder = (DeviceInformationService.LocalBinder) service;
             myService = binder.getServiceInstance(); //Get instance of your service!
-            myService.registerClient(MainActivity.this); //Activity register in the service as client for callabcks!
-//            tvServiceState.setText("Connected to service...");
-//            tbStartTask.setEnabled(true);
+            myService.registerClient(MainActivity.this); //Activity register in the service as client for callbacks!
+            isConnected = myService.isConnected();
+            toggleConnect(isConnected);
         }
 
         @Override
@@ -155,7 +190,6 @@ public class MainActivity extends AppCompatActivity implements DeviceInformation
             }
             if (jobsAdapter.getItemCount() == 0) {
                 hasJobsPending = false;
-//                findViewById(R.id.current_job_data).setVisibility(View.GONE);
             }
             Runnable runnable = new Runnable() {
                 @Override
@@ -167,4 +201,5 @@ public class MainActivity extends AppCompatActivity implements DeviceInformation
             handler.postDelayed(runnable, 800);
         }
     }
+
 }

@@ -3,4 +3,9 @@
     <string name="result">Result %1$d</string>
     <string name="job_data">%1$s with value %2$s</string>
     <string name="none">None</string>
+    <string name="current_job">Current job</string>
+    <string name="connect">Connect!</string>
+    <string name="disconnect">Disconnect!</string>
+    <string name="socket_connected">Connected to server!</string>
+    <string name="socket_disconnected">Disconnected from server!</string>
 </resources>

@@ -66,7 +66,7 @@ body {
 }
 
 #sent_jobs {
-	margin: 0;
+	margin: 10px 0 0;
 	padding: 0;
 	height: 150px;
 	overflow: scroll;
@@ -114,7 +114,6 @@ body {
 }
 
 #btn_send_jobs {
-	margin: 0;
 	border: none;
 	color: #fff;
 	font-family: 'Open Sans', sans-serif;
@@ -125,6 +124,19 @@ body {
 	cursor: pointer;
 	width: 100%;
 	margin: 30px 0 0 0;
+}
+
+#btn_add_job {
+	margin: 0;
+	border: none;
+	color: #fff;
+	font-family: 'Open Sans', sans-serif;
+	background: #008040;
+	outline: none;
+	padding: 10px 20px;
+	font-size: 20px;
+	cursor: pointer;
+	width: auto;
 }
 
 #btn_close {

@@ -26,7 +26,7 @@ public class Utils {
     public void storeSessionId(String sessionId) {
         Editor editor = sharedPref.edit();
         editor.putString(KEY_SESSION_ID, sessionId);
-        editor.commit();
+        editor.apply();
     }
 
     public String getSessionId() {

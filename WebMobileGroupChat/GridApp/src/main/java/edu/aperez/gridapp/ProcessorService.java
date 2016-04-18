@@ -1,4 +1,4 @@
-package edu.aperez.webmobilegroupchat;
+package edu.aperez.gridapp;
 
 import android.app.Service;
 import android.content.Intent;
