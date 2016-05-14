@@ -23,17 +23,16 @@ import info.androidhive.webgroupchat.other.WsConfig;
 /**
  * Created by alexperez on 12/01/2016.
  */
-public class DeviceInformationService extends Service {
+public class ConnectionService extends Service {
 
     private Utils utils;
     private WebSocketClient client;
-    private JobCallback activity;
+    private ConnectionCallbacks activity;
     private static final String TAG_SELF = "self", TAG_NEW = "new",
             TAG_MESSAGE = "message", TAG_EXIT = "exit";
 
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
     private final IBinder mBinder = new LocalBinder();
-    ;
 
     @Override
     public void onCreate() {
@@ -50,7 +49,7 @@ public class DeviceInformationService extends Service {
     }
 
     //Here Activity register to the service as Callbacks client
-    public void registerClient(JobCallback activity) {
+    public void registerClient(ConnectionCallbacks activity) {
         this.activity = activity;
     }
 
@@ -171,18 +170,18 @@ public class DeviceInformationService extends Service {
         return client.isConnected();
     }
 
-    public interface JobCallback {
-        public void updateClient(Message job);
+    public interface ConnectionCallbacks {
+        void updateClient(Message job);
 
-        public void toggleConnect(boolean isConnected);
+        void toggleConnect(boolean isConnected);
 
-        public void showSnackbar(int resId);
+        void showSnackbar(int resId);
     }
 
     //returns the instance of the service
     public class LocalBinder extends Binder {
-        public DeviceInformationService getServiceInstance() {
-            return DeviceInformationService.this;
+        public ConnectionService getServiceInstance() {
+            return ConnectionService.this;
         }
     }
 

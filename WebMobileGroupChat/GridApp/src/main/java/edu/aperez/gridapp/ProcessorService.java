@@ -2,41 +2,41 @@ package edu.aperez.gridapp;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-
-import com.codebutler.android_websockets.WebSocketClient;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import info.androidhive.webgroupchat.other.ConnectionUtils;
 import info.androidhive.webgroupchat.other.Utils;
 
 public class ProcessorService extends Service {
-    private WebSocketClient client;
     private Utils utils;
+    private InformationSender activity;
+    private final IBinder mBinder = new LocalBinder();
 
     @Override
     public void onCreate() {
         super.onCreate();
 
         utils = new Utils(getApplicationContext());
-        client = ConnectionUtils.initializeWebSocket("Processor");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        client.send(utils.getSendMessageJSON(getInfo()));
+        if (activity != null) {
+            activity.sendInfo(utils.getSendMessageJSON(getInfo()));
+        }
         return Service.START_STICKY;
     }
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return mBinder;
     }
 
     private String getInfo() {
@@ -46,7 +46,7 @@ public class ProcessorService extends Service {
                 BufferedReader br = new BufferedReader(new FileReader(new File("/proc/cpuinfo")));
                 String aLine;
                 while ((aLine = br.readLine()) != null) {
-                    if (aLine.contains("processor") || aLine.contains("bogomips"))
+                    if (aLine.toLowerCase().contains("processor") || aLine.toLowerCase().contains("bogomips"))
                         sb.append(aLine + "\n");
                 }
                 if (br != null) {
@@ -59,4 +59,14 @@ public class ProcessorService extends Service {
         return sb.toString();
     }
 
+    public void registerClient(InformationSender mainActivity) {
+        this.activity = mainActivity;
+    }
+
+    //returns the instance of the service
+    public class LocalBinder extends Binder {
+        public ProcessorService getServiceInstance() {
+            return ProcessorService.this;
+        }
+    }
 }

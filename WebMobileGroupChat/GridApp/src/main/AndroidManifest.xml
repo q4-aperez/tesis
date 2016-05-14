@@ -24,7 +24,7 @@
 
         <receiver android:name="edu.aperez.gridapp.ProcessorReceiver" />
 
-        <service android:name="edu.aperez.gridapp.DeviceInformationService" />
+        <service android:name=".ConnectionService" />
     </application>
 
 </manifest>

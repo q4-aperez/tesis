@@ -1,8 +1,11 @@
 package edu.aperez.gridapp;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -26,17 +29,19 @@ import info.androidhive.webgroupchat.other.Utils;
 /**
  * Created by alexperez on 27/09/2015.
  */
-public class MainActivity extends AppCompatActivity implements DeviceInformationService.JobCallback {
+public class MainActivity extends AppCompatActivity implements ConnectionService.ConnectionCallbacks, InformationSender {
 
     private RecyclerView jobsList;
     private JobsAdapter jobsAdapter;
     private boolean hasJobsPending;
-    private DeviceInformationService myService;
+    private ConnectionService connectionService;
+    private ProcessorService processorService;
+    private BatteryService batteryService;
     private Utils utils;
     private ProgressBar progressBar;
-    TextView connectButton;
-    boolean isConnected;
-    View view;
+    private TextView connectButton;
+    private boolean isConnected;
+    private View view;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,37 +53,42 @@ public class MainActivity extends AppCompatActivity implements DeviceInformation
         view = findViewById(R.id.activity_container);
         setupJobsList();
 
-//        //Processor receiver
-//        AlarmManager service = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-//        Intent intent = new Intent(this, ProcessorReceiver.class);
-//        PendingIntent pending = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-//        // fetch every 30 seconds
-//        // InexactRepeating allows Android to optimize the energy consumption
-//        long secondsFromNow = System.currentTimeMillis() + 5 * 1000;
-//        service.setInexactRepeating(AlarmManager.RTC_WAKEUP,
-//                secondsFromNow, 30000, pending);
-//
-//        //Battery Receiver
-//        IntentFilter intentFilter = new IntentFilter();
-//        intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
-//        BatteryReceiver batteryReceiver = new BatteryReceiver();
-//        registerReceiver(batteryReceiver, intentFilter);
+        //Processor receiver
+        AlarmManager service = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent processorRecIntent = new Intent(this, ProcessorReceiver.class);
+        PendingIntent pending = PendingIntent.getBroadcast(this, 0, processorRecIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        // fetch every 30 seconds
+        // InexactRepeating allows Android to optimize the energy consumption
+        long secondsFromNow = System.currentTimeMillis() + 5 * 1000;
+        service.setInexactRepeating(AlarmManager.RTC_WAKEUP, secondsFromNow, 30000, pending);
+        Intent processorIntent = new Intent(this, ProcessorService.class);
+        startService(processorIntent);
+        bindService(processorIntent, proccesorConnection, Context.BIND_AUTO_CREATE);
 
-        Intent serviceIntent = new Intent(this, DeviceInformationService.class);
-        startService(serviceIntent);
-        bindService(serviceIntent, mConnection, Context.BIND_AUTO_CREATE); //Binding to the service!
+        //Battery Receiver
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
+        BatteryReceiver batteryReceiver = new BatteryReceiver();
+        registerReceiver(batteryReceiver, intentFilter);
+        Intent batteryIntent = new Intent(this, BatteryService.class);
+        startService(batteryIntent);
+        bindService(batteryIntent, batteryConnection, Context.BIND_AUTO_CREATE);
+
+        Intent connectionIntent = new Intent(this, ConnectionService.class);
+        startService(connectionIntent);
+        bindService(connectionIntent, serverConnection, Context.BIND_AUTO_CREATE); //Binding to the service!
         utils = new Utils(this);
 
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (myService == null) {
+                if (connectionService == null) {
                     return;
                 }
                 if (isConnected) {
-                    myService.disconnectClient();
+                    connectionService.disconnectClient();
                 } else {
-                    myService.connectClient();
+                    connectionService.connectClient();
                 }
             }
         });
@@ -146,26 +156,61 @@ public class MainActivity extends AppCompatActivity implements DeviceInformation
         }
     }
 
-    private ServiceConnection mConnection = new ServiceConnection() {
+    private ServiceConnection serverConnection = new ServiceConnection() {
 
         @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
+        public void onServiceConnected(ComponentName className, IBinder service) {
             // We've binded to LocalService, cast the IBinder and get LocalService instance
-            DeviceInformationService.LocalBinder binder = (DeviceInformationService.LocalBinder) service;
-            myService = binder.getServiceInstance(); //Get instance of your service!
-            myService.registerClient(MainActivity.this); //Activity register in the service as client for callbacks!
-            isConnected = myService.isConnected();
+            ConnectionService.LocalBinder binder = (ConnectionService.LocalBinder) service;
+            connectionService = binder.getServiceInstance(); //Get instance of your service!
+            connectionService.registerClient(MainActivity.this); //Activity register in the service as client for callbacks!
+            isConnected = connectionService.isConnected();
             toggleConnect(isConnected);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-//            Toast.makeText(MainActivity.this, "onServiceDisconnected called", Toast.LENGTH_SHORT).show();
-//            tvServiceState.setText("Service disconnected");
-//            tbStartTask.setEnabled(false);
+
         }
     };
+
+    private ServiceConnection proccesorConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // We've binded to LocalService, cast the IBinder and get LocalService instance
+            ProcessorService.LocalBinder binder = (ProcessorService.LocalBinder) service;
+            processorService = binder.getServiceInstance(); //Get instance of your service!
+            processorService.registerClient(MainActivity.this); //Activity register in the service as client for callbacks!
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+
+        }
+    };
+
+    private ServiceConnection batteryConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // We've binded to LocalService, cast the IBinder and get LocalService instance
+            BatteryService.LocalBinder binder = (BatteryService.LocalBinder) service;
+            batteryService = binder.getServiceInstance(); //Get instance of your service!
+            batteryService.registerClient(MainActivity.this); //Activity register in the service as client for callbacks!
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+
+        }
+    };
+
+    @Override
+    public void sendInfo(String jsonInfo) {
+        if (!isConnected) {
+            return;
+        }
+        connectionService.sendMessage(jsonInfo);
+    }
 
     private class ExecuteJob extends AsyncTask<Message, Void, Long> {
         @Override
@@ -185,8 +230,8 @@ public class MainActivity extends AppCompatActivity implements DeviceInformation
 
         @Override
         protected void onPostExecute(Long result) {
-            if (myService != null) {
-                myService.sendMessage(utils.getSendMessageJSON(getString(R.string.result, result)));
+            if (connectionService != null) {
+                connectionService.sendMessage(utils.getSendMessageJSON(getString(R.string.result, result)));
             }
             if (jobsAdapter.getItemCount() == 0) {
                 hasJobsPending = false;
