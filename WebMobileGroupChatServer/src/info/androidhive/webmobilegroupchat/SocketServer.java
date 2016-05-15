@@ -16,7 +16,6 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
-import org.apache.tomcat.websocket.WsSession;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -99,7 +98,7 @@ public class SocketServer {
 		}
 
 		// Notifying all the clients about new person joined
-		sendMessageToAll(session.getId(), name, " joined conversation!", true, false);
+		sendMessageToAll(session.getId(), name, " joined the grid!", true, false);
 
 	}
 
@@ -125,7 +124,30 @@ public class SocketServer {
 		}
 
 		// Sending the message to all clients
-		sendMessageToAll(session.getId(), nameSessionPair.get(session.getId()), msg, false, false);
+		if (msg.contains("@")) {
+			String[] messageParts = msg.split("@");
+			String destination = messageParts[0];
+			String messageToSend = messageParts[1];
+			for (Session s : sessions) {
+				if (nameSessionPair.get(s.getId()).equals(destination)) {
+					String json = null;
+
+					json = jsonUtils.getSendAllMessageJson(session.getId(), nameSessionPair.get(session.getId()),
+							messageToSend);
+
+					try {
+						System.out.println("Sending Message To: " + session.getId() + ", " + json);
+
+						s.getBasicRemote().sendText(json);
+					} catch (IOException e) {
+						System.out.println("error in sending. " + s.getId() + ", " + e.getMessage());
+						e.printStackTrace();
+					}
+				}
+			}
+		} else {
+			sendMessageToAll(session.getId(), nameSessionPair.get(session.getId()), msg, false, false);
+		}
 	}
 
 	/**
@@ -143,7 +165,7 @@ public class SocketServer {
 		sessions.remove(session);
 
 		// Notifying all the clients about person exit
-		sendMessageToAll(session.getId(), name, " left conversation!", false, true);
+		sendMessageToAll(session.getId(), name, " left the grid!", false, true);
 
 	}
 

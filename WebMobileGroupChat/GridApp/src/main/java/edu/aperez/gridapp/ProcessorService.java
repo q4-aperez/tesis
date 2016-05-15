@@ -45,10 +45,15 @@ public class ProcessorService extends Service {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(new File("/proc/cpuinfo")));
                 String aLine;
+                int processorCount = 0;
                 while ((aLine = br.readLine()) != null) {
-                    if (aLine.toLowerCase().contains("processor") || aLine.toLowerCase().contains("bogomips"))
+                    if (aLine.contains("processor")) {
+                        processorCount++;
+                    } else if (aLine.toLowerCase().contains("bogomips")) {
                         sb.append(aLine + "\n");
+                    }
                 }
+                sb.append("processor count: " + processorCount + "\n");
                 if (br != null) {
                     br.close();
                 }

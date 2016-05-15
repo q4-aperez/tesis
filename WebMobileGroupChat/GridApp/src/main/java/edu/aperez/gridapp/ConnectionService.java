@@ -40,7 +40,7 @@ public class ConnectionService extends Service {
 
         utils = new Utils(this);
 
-        client = initializeWebSocket(Build.MODEL);
+        client = initializeWebSocket(Build.MODEL.replaceAll(" ", ""));
     }
 
     @Override

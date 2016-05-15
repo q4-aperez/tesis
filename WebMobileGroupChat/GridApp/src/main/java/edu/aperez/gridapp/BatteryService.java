@@ -41,7 +41,7 @@ public class BatteryService extends Service {
 
 
             final int batteryPct = (int) (level / (float) scale * 100);
-            activity.sendInfo(utils.getSendMessageJSON(batteryPct + "%"));
+            activity.sendInfo(utils.getSendMessageJSON("battery:" + batteryPct));
 
         }
 

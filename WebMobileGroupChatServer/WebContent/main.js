@@ -147,6 +147,8 @@ function parseMessage(message) {
 
 		if (jObj.sessionId != sessionId) {
 			new_name = jObj.name;
+			devicesInfo[new_name] = {};
+			devicesArray.push(new_name);
 		}
 
 		var li = '<li class="new" tabindex="1"><span class="name">' + new_name + '</span> ' + jObj.message + '</li>';
@@ -163,6 +165,17 @@ function parseMessage(message) {
 			var li = '<li tabindex="1"><span class="name">' + jObj.name + '</span> ' + jObj.message + '</li>';
 			// appending the chat message to list
 			appendChatMessage(li);
+
+			var info = jObj.message.split(":");
+
+			if (devicesInfo[jObj.name] == null) {
+				devicesInfo[jObj.name] = {};
+			}
+			if (info[0] == "processor count") {
+				devicesInfo[jObj.name]["processors"] = info[1];
+			} else if (info[0] == "battery") {
+				devicesInfo[jObj.name]["battery"] = info[1];
+			}
 		}
 	} else if (jObj.flag == 'exit') {
 		// if the json flag is 'exit', it means somebody left the grid
@@ -170,11 +183,16 @@ function parseMessage(message) {
 
 		var online_count = jObj.onlineCount;
 
-		$('p.online_count').html('Hello, <span class="green">' + name + '</span>. <b>' + online_count + '</b> people online right now');
-
+		$('p.online_count').html('Hello, <span class="green">' + name + '</span>. <b>' + online_count + '</b> devices online right now');
+		var index = devicesArray.indexOf(jObj.name);
+		if (index > -1) {
+			devicesArray.splice(index, 1);
+		}
 		appendChatMessage(li);
 	}
 }
+
+var devicesInfo = {};
 
 /**
  * Appending the job message to jobs list
@@ -199,13 +217,26 @@ function appendSentJob(li) {
 /**
  * Sending message to socket server message will be in json format
  */
+var lastSelected = 0;
+var devicesArray = [];
 function sendMessageToServer(flag, message) {
 	var json = '{""}';
+	var scheduler = $("#scheduler_option option:selected").val();
+	var selectedDevice;
+	if (scheduler == "random") {
+		lastSelected = Math.floor(Math.random() * devicesArray.length);
+		selectedDevice = devicesArray[lastSelected]
+	} else if (scheduler == "roundrobin") {
+		selectedDevice = devicesArray[lastSelected]
+		lastSelected = (lastSelected + 1) % devicesArray.length;
+	} else if (scheduler == "seas") {
+
+	}
 
 	// preparing json object
-	var myObject = new Object();
+	var myObject = {};
 	myObject.sessionId = sessionId;
-	myObject.message = message;
+	myObject.message = selectedDevice + "@" + message;
 	myObject.flag = flag;
 
 	// converting json object to json string

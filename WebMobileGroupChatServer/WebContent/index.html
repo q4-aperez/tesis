@@ -33,7 +33,16 @@
 					type="number" /> <input type="button" id="btn_add_job"
 					onclick="addJob();" value="Add Job" />
 			</div>
-
+			<div>
+				<p class=''>
+					<b>Scheduler: </b>
+				</p>
+				<select id="scheduler_option">
+					<option value="random">Random</option>
+					<option value="roundrobin">Round Robin</option>
+					<option value="seas">SEAS</option>
+				</select>
+			</div>
 			<div id="contentBox" style="margin: 0px auto; width: 100%">
 
 				<div id="column2" style="float: left; margin: 0; width: 30%;">
@@ -47,8 +56,8 @@
 					<ul id="messages">
 					</ul>
 					<div>
-						<input type="button" onclick="closeSocket();"
-							value="Leave Grid" id="btn_close" />
+						<input type="button" onclick="closeSocket();" value="Leave Grid"
+							id="btn_close" />
 					</div>
 				</div>
 			</div>
