@@ -8,7 +8,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
-import info.androidhive.webgroupchat.other.Utils;
+import edu.aperez.gridapp.util.Utils;
 
 /**
  * Created by alex.perez on 29/10/2015.

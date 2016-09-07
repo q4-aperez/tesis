@@ -1,4 +1,4 @@
-package info.androidhive.webgroupchat.other;
+package edu.aperez.gridapp.util;
 
 import org.json.JSONException;
 import org.json.JSONObject;

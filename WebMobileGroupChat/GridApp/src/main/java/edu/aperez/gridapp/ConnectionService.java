@@ -17,8 +17,8 @@ import org.json.JSONObject;
 import java.net.URI;
 
 import edu.aperez.gridapp.model.Message;
-import info.androidhive.webgroupchat.other.Utils;
-import info.androidhive.webgroupchat.other.WsConfig;
+import edu.aperez.gridapp.util.Utils;
+import edu.aperez.gridapp.util.WsConfig;
 
 /**
  * Created by alexperez on 12/01/2016.

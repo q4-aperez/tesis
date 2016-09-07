@@ -1,4 +1,4 @@
-package info.androidhive.webgroupchat.other;
+package edu.aperez.gridapp.util;
 
 /**
  * Created by alexperez on 27/09/2015.

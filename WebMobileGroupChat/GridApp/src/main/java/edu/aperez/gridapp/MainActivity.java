@@ -23,8 +23,8 @@ import android.widget.TextView;
 import edu.aperez.gridapp.job.Factorial;
 import edu.aperez.gridapp.job.Fibonacci;
 import edu.aperez.gridapp.model.Message;
-import info.androidhive.webgroupchat.other.Constants;
-import info.androidhive.webgroupchat.other.Utils;
+import edu.aperez.gridapp.util.Constants;
+import edu.aperez.gridapp.util.Utils;
 
 /**
  * Created by alexperez on 27/09/2015.
