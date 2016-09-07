@@ -1,4 +1,4 @@
-package edu.aperez.gridapp;
+package edu.aperez.gridapp.services;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

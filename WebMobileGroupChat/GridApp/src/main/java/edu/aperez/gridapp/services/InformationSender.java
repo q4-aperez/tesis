@@ -1,4 +1,4 @@
-package edu.aperez.gridapp;
+package edu.aperez.gridapp.services;
 
 /**
  * Created by alexperez on 14/05/2016.

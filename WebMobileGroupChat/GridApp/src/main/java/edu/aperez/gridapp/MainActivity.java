@@ -23,6 +23,12 @@ import android.widget.TextView;
 import edu.aperez.gridapp.job.Factorial;
 import edu.aperez.gridapp.job.Fibonacci;
 import edu.aperez.gridapp.model.Message;
+import edu.aperez.gridapp.services.BatteryReceiver;
+import edu.aperez.gridapp.services.BatteryService;
+import edu.aperez.gridapp.services.ConnectionService;
+import edu.aperez.gridapp.services.InformationSender;
+import edu.aperez.gridapp.services.ProcessorReceiver;
+import edu.aperez.gridapp.services.ProcessorService;
 import edu.aperez.gridapp.util.Constants;
 import edu.aperez.gridapp.util.Utils;
 
@@ -46,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionService
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.jobs_fragment);
 
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         connectButton = (TextView) findViewById(R.id.connect_button);

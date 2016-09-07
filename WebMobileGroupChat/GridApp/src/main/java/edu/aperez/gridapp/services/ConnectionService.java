@@ -1,4 +1,4 @@
-package edu.aperez.gridapp;
+package edu.aperez.gridapp.services;
 
 import android.app.Service;
 import android.content.Intent;
@@ -16,6 +16,7 @@ import org.json.JSONObject;
 
 import java.net.URI;
 
+import edu.aperez.gridapp.R;
 import edu.aperez.gridapp.model.Message;
 import edu.aperez.gridapp.util.Utils;
 import edu.aperez.gridapp.util.WsConfig;

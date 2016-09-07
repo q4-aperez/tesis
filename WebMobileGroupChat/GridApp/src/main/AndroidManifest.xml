@@ -9,7 +9,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <activity
-            android:name="edu.aperez.gridapp.MainActivity"
+            android:name=".jobs.JobsActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -18,13 +18,13 @@
             </intent-filter>
         </activity>
 
-        <service android:name="edu.aperez.gridapp.ProcessorService" />
+        <service android:name=".services.ProcessorService" />
 
-        <service android:name="edu.aperez.gridapp.BatteryService" />
+        <service android:name=".services.BatteryService" />
 
-        <receiver android:name="edu.aperez.gridapp.ProcessorReceiver" />
+        <receiver android:name=".services.ProcessorReceiver" />
 
-        <service android:name=".ConnectionService" />
+        <service android:name=".services.ConnectionService" />
     </application>
 
 </manifest>
