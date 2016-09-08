@@ -10,6 +10,8 @@ public interface JobsContract {
     interface Controller {
 
         void addJob(Message job);
+
+        void toggleConnection();
     }
 
     interface View {
@@ -21,5 +23,9 @@ public interface JobsContract {
         void setExecutingJob(Message job);
 
         int getJobsCount();
+
+        void showSnackbar(int resId);
+
+        void toggleConnect(boolean isConnected);
     }
 }

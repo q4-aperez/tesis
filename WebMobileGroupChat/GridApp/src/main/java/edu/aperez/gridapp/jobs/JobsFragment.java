@@ -2,7 +2,9 @@ package edu.aperez.gridapp.jobs;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -54,14 +56,7 @@ public class JobsFragment extends Fragment implements JobsContract.View {
         mConnectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (connectionService == null) {
-                    return;
-                }
-                if (mIsConnected) {
-                    connectionService.disconnectClient();
-                } else {
-                    connectionService.connectClient();
-                }
+                mController.toggleConnection();
             }
         });
 
@@ -107,5 +102,21 @@ public class JobsFragment extends Fragment implements JobsContract.View {
     @Override
     public int getJobsCount() {
         return mJobsAdapter.getItemCount();
+    }
+
+    @Override
+    public void showSnackbar(int resId) {
+        Snackbar.make(mRoot, resId, Snackbar.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void toggleConnect(boolean isConnected) {
+        if (isConnected) {
+            mConnectButton.setText(R.string.disconnect);
+            mConnectButton.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.red_button));
+        } else {
+            mConnectButton.setText(R.string.connect);
+            mConnectButton.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.green_button));
+        }
     }
 }

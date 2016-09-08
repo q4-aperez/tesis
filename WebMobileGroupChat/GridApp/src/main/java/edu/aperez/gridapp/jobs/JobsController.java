@@ -38,6 +38,11 @@ public class JobsController implements JobsContract.Controller {
         }
     }
 
+    @Override
+    public void toggleConnection() {
+        mContext.toggleConnection();
+    }
+
     private void executePendingJobs() {
         if (mHasJobsPending) {
             Message job = mView.getFirstJob();

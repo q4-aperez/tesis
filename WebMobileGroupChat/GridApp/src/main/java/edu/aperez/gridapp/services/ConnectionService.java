@@ -174,7 +174,7 @@ public class ConnectionService extends Service {
     public interface ConnectionCallbacks {
         void updateClient(Message job);
 
-        void toggleConnect(boolean isConnected);
+        void toggleConnectButtonText(boolean isConnected);
 
         void showSnackbar(int resId);
     }
@@ -190,11 +190,11 @@ public class ConnectionService extends Service {
         client.disconnect();
         utils.storeSessionId(null);
         activity.showSnackbar(R.string.socket_disconnected);
-        activity.toggleConnect(false);
+        activity.toggleConnectButtonText(false);
     }
 
     public void connectClient() {
         client.connect();
-        activity.toggleConnect(true);
+        activity.toggleConnectButtonText(true);
     }
 }

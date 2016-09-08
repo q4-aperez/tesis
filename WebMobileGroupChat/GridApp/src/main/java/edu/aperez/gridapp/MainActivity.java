@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionService
     }
 
     @Override
-    public void toggleConnect(boolean isConnected) {
+    public void toggleConnectButtonText(boolean isConnected) {
         this.isConnected = isConnected;
         if (isConnected) {
             connectButton.setText(R.string.disconnect);
@@ -171,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionService
             connectionService = binder.getServiceInstance(); //Get instance of your service!
             connectionService.registerClient(MainActivity.this); //Activity register in the service as client for callbacks!
             isConnected = connectionService.isConnected();
-            toggleConnect(isConnected);
+            toggleConnectButtonText(isConnected);
         }
 
         @Override

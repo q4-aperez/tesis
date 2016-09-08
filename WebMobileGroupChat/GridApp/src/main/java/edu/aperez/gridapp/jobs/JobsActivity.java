@@ -9,8 +9,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -44,7 +42,7 @@ public class JobsActivity extends AppCompatActivity implements ConnectionService
             connectionService = binder.getServiceInstance(); //Get instance of your service!
             connectionService.registerClient(JobsActivity.this); //Activity register in the service as client for callbacks!
             mIsConnected = connectionService.isConnected();
-            toggleConnect(mIsConnected);
+            toggleConnectButtonText(mIsConnected);
         }
 
         @Override
@@ -146,28 +144,36 @@ public class JobsActivity extends AppCompatActivity implements ConnectionService
     }
 
     @Override
-    public void toggleConnect(boolean isConnected) {
-        this.isConnected = isConnected;
-        if (isConnected) {
-            connectButton.setText(R.string.disconnect);
-            connectButton.setBackground(ContextCompat.getDrawable(this, R.drawable.red_button));
-        } else {
-            connectButton.setText(R.string.connect);
-            connectButton.setBackground(ContextCompat.getDrawable(this, R.drawable.green_button));
-        }
+    public void toggleConnectButtonText(boolean isConnected) {
+        mIsConnected = isConnected;
+        mJobsFragment.toggleConnect(isConnected);
     }
 
     @Override
     public void showSnackbar(int resId) {
-        Snackbar.make(view, resId, Snackbar.LENGTH_SHORT).show();
+        mJobsFragment.showSnackbar(resId);
     }
 
     @Override
     public void sendInfo(String jsonInfo) {
-
+        if (!mIsConnected) {
+            return;
+        }
+        connectionService.sendMessage(jsonInfo);
     }
 
     public ConnectionService getConnectionService() {
         return connectionService;
+    }
+
+    public void toggleConnection() {
+        if (connectionService == null) {
+            return;
+        }
+        if (mIsConnected) {
+            connectionService.disconnectClient();
+        } else {
+            connectionService.connectClient();
+        }
     }
 }
