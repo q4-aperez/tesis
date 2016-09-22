@@ -36,7 +36,8 @@ function openSocket() {
 	}
 
 	// Create a new instance of the websocket
-	webSocket = new WebSocket("ws://" + socket_url + ":" + port + "/WebMobileGroupChatServer/chat?name=" + name);
+	webSocket = new WebSocket("ws://" + socket_url + ":" + port
+			+ "/WebMobileGroupChatServer/chat?name=" + name);
 
 	/**
 	 * Binds functions to the listeners for the websocket.
@@ -79,7 +80,8 @@ function addJob() {
 	var job = $("#job_name option:selected").val();
 
 	if (value.trim().length > 0 && isNumeric(value)) {
-		var li = '<li tabindex="1"><span class="name">' + job + '</span> (' + value + ')</li>';
+		var li = '<li tabindex="1"><span class="name">' + job + '</span> ('
+				+ value + ')</li>';
 		$('#jobs').append(li);
 		$('#jobs li').last().focus();
 		jobsList.push({
@@ -143,15 +145,21 @@ function parseMessage(message) {
 		// number of people online
 		var online_count = jObj.onlineCount - 1;
 
-		$('p.online_count').html('Hello, <span class="green">' + name + '</span>. <b>' + online_count + '</b> devices online right now').fadeIn();
+		$('p.online_count').html(
+				'Hello, <span class="green">' + name + '</span>. <b>'
+						+ online_count + '</b> devices online right now')
+				.fadeIn();
 
 		if (jObj.sessionId != sessionId) {
 			new_name = jObj.name;
-			devicesInfo[new_name] = {};
+			devicesInfo[new_name] = {
+				arrayIndex : devicesArray.length
+			};
 			devicesArray.push(new_name);
 		}
 
-		var li = '<li class="new" tabindex="1"><span class="name">' + new_name + '</span> ' + jObj.message + '</li>';
+		var li = '<li class="new" tabindex="1"><span class="name">' + new_name
+				+ '</span> ' + jObj.message + '</li>';
 		$('#messages').append(li);
 
 		$('#input_message').val('');
@@ -162,28 +170,65 @@ function parseMessage(message) {
 			// appending the job to sent list
 			appendSentJob(li);
 		} else {
-			var li = '<li tabindex="1"><span class="name">' + jObj.name + '</span> ' + jObj.message + '</li>';
+			var li = '<li tabindex="1"><span class="name">' + jObj.name
+					+ '</span> ' + jObj.message + '</li>';
 			// appending the chat message to list
 			appendChatMessage(li);
 
 			var info = jObj.message.split(":");
 
 			if (devicesInfo[jObj.name] == null) {
-				devicesInfo[jObj.name] = {};
+				devicesInfo[jObj.name] = {
+					benchmark : null,
+					battery : null,
+					jobs : 0
+				};
 			}
 			if (info[0] == "processor count") {
-				devicesInfo[jObj.name]["processors"] = info[1];
+				devicesInfo[jObj.name]["benchmark"] = info[1];
 			} else if (info[0] == "battery") {
-				devicesInfo[jObj.name]["battery"] = info[1];
+				var batteryData = devicesInfo[jObj.name]["battery"];
+				if (batteryData) {
+					batteryData.oldCharge = batteryData.newCharge;
+					batteryData.oldTime = batteryData.newTime;
+					batteryData.newCharge = info[1];
+					batteryData.newTime = new Date().getTime();
+					var dischargeRate = (batteryData.newTime - batteryData.oldTime)
+							/ (batteryData.oldCharge - batteryData.newCharge);
+					var estimatedUptime = batteryData.newTime
+							- batteryData.startTime + batteryData.newCharge
+							* dischargeRate;
+					batteryData.previousEstimations.push(estimatedUptime);
+					var newEstimatedUptime = getAverage(batteryData.previousEstimations)
+							- (batteryData.newTime - batteryData.startTime);
+					// Save new estimated uptime
+					batteryData.estimatedUptime = newEstimatedUptime;
+				} else {
+					devicesInfo[jObj.name].battery = {
+						oldCharge : null,
+						newCharge : info[1],
+						oldTime : null,
+						newTime : new Date().getTime(),
+						startTime : new Date().getTime(),
+						previousEstimations : [],
+						estimatedUptime : null
+					}
+				}
+			} else { // it's a result
+				// decrement the jobs counter on the device
+				devicesInfo[jObj.name].jobs = devicesInfo[jObj.name].jobs - 1;
 			}
 		}
 	} else if (jObj.flag == 'exit') {
 		// if the json flag is 'exit', it means somebody left the grid
-		var li = '<li class="exit" tabindex="1"><span class="name red">' + jObj.name + '</span> ' + jObj.message + '</li>';
+		var li = '<li class="exit" tabindex="1"><span class="name red">'
+				+ jObj.name + '</span> ' + jObj.message + '</li>';
 
 		var online_count = jObj.onlineCount;
 
-		$('p.online_count').html('Hello, <span class="green">' + name + '</span>. <b>' + online_count + '</b> devices online right now');
+		$('p.online_count').html(
+				'Hello, <span class="green">' + name + '</span>. <b>'
+						+ online_count + '</b> devices online right now');
 		var index = devicesArray.indexOf(jObj.name);
 		if (index > -1) {
 			devicesArray.splice(index, 1);
@@ -214,23 +259,59 @@ function appendSentJob(li) {
 	$('#sent_jobs li').last().focus();
 }
 
+var lastSelected = 0;
+var devicesArray = [];
+
+function randomScheduler() {
+	lastSelected = Math.floor(Math.random() * devicesArray.length);
+	var deviceName = devicesArray[lastSelected];
+	return deviceName;
+}
+
+function roundRobinScheduler() {
+	var deviceName = devicesArray[lastSelected];
+	lastSelected = (lastSelected + 1) % devicesArray.length;
+	return deviceName;
+}
+
+function seasScheduler() {
+	var tempBest = 0, tempName;
+	for (var i = 0, j = devicesArray.length; i < j; i++) {
+		var deviceName = devicesArray[i];
+		var deviceInfo = devicesInfo[deviceName];
+		var score = deviceInfo.battery.estimatedUptime * deviceInfo.benchmark
+				/ (deviceInfo.jobs + 1);
+		if (score > tempBest) {
+			tempBest = score;
+			tempName = deviceName;
+		}
+	}
+	return tempName;
+}
+
+function getAverage(estimationsArray) {
+	var total = 0;
+	var count = estimationsArray.length > 0 ? estimationsArray.length : 1;
+	for (var i = 0, j = estimationsArray.length; i < j; i++) {
+		total += estimationsArray[i];
+	}
+	return (float)
+	total / count;
+}
+
 /**
  * Sending message to socket server message will be in json format
  */
-var lastSelected = 0;
-var devicesArray = [];
 function sendMessageToServer(flag, message) {
 	var json = '{""}';
 	var scheduler = $("#scheduler_option option:selected").val();
 	var selectedDevice;
 	if (scheduler == "random") {
-		lastSelected = Math.floor(Math.random() * devicesArray.length);
-		selectedDevice = devicesArray[lastSelected]
+		selectedDevice = randomScheduler();
 	} else if (scheduler == "roundrobin") {
-		selectedDevice = devicesArray[lastSelected]
-		lastSelected = (lastSelected + 1) % devicesArray.length;
+		selectedDevice = roundRobinScheduler();
 	} else if (scheduler == "seas") {
-
+		selectedDevice = seasScheduler();
 	}
 
 	// preparing json object
@@ -244,4 +325,6 @@ function sendMessageToServer(flag, message) {
 
 	// sending message to server
 	webSocket.send(json);
+	// increment the jobs counter on the device
+	devicesInfo[selectedDevice].jobs = devicesInfo[selectedDevice].jobs + 1;
 }
