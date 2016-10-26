@@ -5,7 +5,7 @@ var sessionId = '';
 var name = '';
 
 // socket connection url and port
-var socket_url = '192.168.0.4';
+var socket_url = '192.168.1.24';
 var port = '8080';
 
 $(document).ready(function() {
@@ -76,22 +76,26 @@ function send() {
 
 var jobsList = [];
 function addJob() {
-	var value = $('#job_value').val();
-	var job = $("#job_name option:selected").val();
+	// var value = $('#job_value').val();
+	// var job = $("#job_name option:selected").val();
+	//
+	// if (value.trim().length > 0 && isNumeric(value)) {
+	// queueNewJob(job, value);
+	// } else {
+	// alert('Please enter a value for the job!');
+	// }
+	generateJobs();
+}
 
-	if (value.trim().length > 0 && isNumeric(value)) {
-		var li = '<li tabindex="1"><span class="name">' + job + '</span> ('
-				+ value + ')</li>';
-		$('#jobs').append(li);
-		$('#jobs li').last().focus();
-		jobsList.push({
-			job : job,
-			value : value
-		});
-	} else {
-		alert('Please enter a value for the job!');
-	}
-
+function queueNewJob(job, value) {
+	var li = '<li tabindex="1"><span class="name">' + job + '</span> (' + value
+			+ ')</li>';
+	$('#jobs').append(li);
+	$('#jobs li').last().focus();
+	jobsList.push({
+		job : job,
+		value : value
+	});
 }
 
 function sendJobs() {
@@ -327,4 +331,33 @@ function sendMessageToServer(flag, message) {
 	webSocket.send(json);
 	// increment the jobs counter on the device
 	devicesInfo[selectedDevice].jobs = devicesInfo[selectedDevice].jobs + 1;
+}
+
+var totalJobsCreated = 0;
+var jobsArray = ["fibonacci","factorial"];
+
+function generateJobs() {
+	if (totalJobsCreated < 100) {
+		createRandomJobs();
+	}
+}
+
+function createRandomJobs(){
+	setTimeout(function() {
+		var jobsToCreate = getRandomIntInclusive(1, 10);		
+		totalJobsCreated += jobsToCreate;
+		console.log("JobsToCreate: " + jobsToCreate);
+		console.log("totalJobsCreated: " + totalJobsCreated);
+		for (var i = 0, j = jobsToCreate; i < j; i++) {
+			queueNewJob(jobsArray[getRandomIntInclusive(0, jobsArray.length-1)], getRandomIntInclusive(1, 60));
+		}
+//		sendJobs();
+		generateJobs();
+	}, getRandomIntInclusive(500, 3000));
+}
+
+function getRandomIntInclusive(min, max) {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
