@@ -299,8 +299,7 @@ function getAverage(estimationsArray) {
 	for (var i = 0, j = estimationsArray.length; i < j; i++) {
 		total += estimationsArray[i];
 	}
-	return (float)
-	total / count;
+	return total * 1.0 / count; //*1.0 is a float conversion
 }
 
 /**
@@ -337,7 +336,7 @@ var totalJobsCreated = 0;
 var jobsArray = ["fibonacci","factorial"];
 
 function generateJobs() {
-	if (totalJobsCreated < 100) {
+	if (totalJobsCreated < 10) {
 		createRandomJobs();
 	}
 }
