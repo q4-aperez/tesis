@@ -5,7 +5,7 @@ var sessionId = '';
 var name = '';
 
 // socket connection url and port
-var socket_url = '192.168.1.24';
+var socket_url = '192.168.0.4';
 var port = '8080';
 
 $(document).ready(function() {
@@ -351,7 +351,7 @@ function createRandomJobs(){
 		for (var i = 0, j = jobsToCreate; i < j; i++) {
 			queueNewJob(jobsArray[getRandomIntInclusive(0, jobsArray.length-1)], getRandomIntInclusive(1, 60));
 		}
-//		sendJobs();
+		sendJobs();
 		generateJobs();
 	}, getRandomIntInclusive(500, 3000));
 }
