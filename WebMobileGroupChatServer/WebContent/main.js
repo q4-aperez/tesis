@@ -287,9 +287,9 @@ function randomScheduler() {
 	return deviceName;
 }
 
-function roundRobinScheduler() {
-	var deviceName = devicesArray[lastSelected];
+function roundRobinScheduler() {	
 	lastSelected = (lastSelected + 1) % devicesArray.length;
+	var deviceName = devicesArray[lastSelected];
 	return deviceName;
 }
 
