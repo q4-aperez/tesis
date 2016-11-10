@@ -80,7 +80,8 @@ public class JobsController implements JobsContract.Controller {
             if (connectionService != null) {
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
                 Date resultDate = new Date();
-                connectionService.sendMessage(mUtils.getSendMessageJSON(mContext.getString(R.string.result, result) + "\nTime: " + simpleDateFormat.format(resultDate)));
+                String message = mContext.getString(R.string.result, result,mView.getJobsCount(),simpleDateFormat.format(resultDate));
+                connectionService.sendMessage(mUtils.getSendMessageJSON(message));
             }
             if (mView.getJobsCount() == 0) {
                 mHasJobsPending = false;

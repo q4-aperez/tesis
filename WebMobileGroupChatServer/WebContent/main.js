@@ -5,7 +5,7 @@ var sessionId = '';
 var name = '';
 
 // socket connection url and port
-var socket_url = '192.168.0.4';
+var socket_url = '192.168.1.24';
 var port = '8080';
 
 var jobsList = [];
@@ -111,7 +111,7 @@ function sendJobs() {
 		sendMessageToServer('message', job.job + ";" + Math.floor(job.value));
 		totalJobsSent++;
 	}
-	console.log("Total jobs sent so far: " + totalJobsSent);
+	// console.log("Total jobs sent so far: " + totalJobsSent);
 	$('#jobs').html('');
 	// alert('Jobs sent!');
 	jobsList = [];
@@ -165,10 +165,10 @@ function parseMessage(message) {
 
 		if (jObj.sessionId != sessionId) {
 			new_name = jObj.name;
-			devicesInfo[new_name] = {
-				arrayIndex : devicesArray.length
-			};
-			devicesArray.push(new_name);
+			var index = devicesArray.indexOf(new_name);
+			if (index < 0) {
+				devicesArray.push(new_name);
+			}
 		}
 
 		var li = '<li class="new" tabindex="1"><span class="name">' + new_name
@@ -198,8 +198,19 @@ function parseMessage(message) {
 				};
 			}
 			var trimmedInfo = info[0].trim();
-			if (trimmedInfo == "BogoMIPS") {
-				devicesInfo[jObj.name]["benchmark"] = info[1];
+			if (trimmedInfo == "BogoMIPS" || trimmedInfo == "processor count") {
+				var mips = 0.0;
+				var processors = 1;
+				for (var i = 0, j = info.length; i < j; i++) {
+					console.log("info[i].trim().split('\n')"+info[i].trim().split("\n"));
+					if (info[i].trim().split("\n")[0] == "BogoMIPS"
+							|| info[i].trim().split("\n")[1] == "BogoMIPS") {
+						var currentMips = parseFloat(info[i + 1].trim().split(
+								"\n")[0]);
+						mips += currentMips;
+					}
+				}
+				devicesInfo[jObj.name]["benchmark"] = mips;
 			} else if (info[0] == "battery") {
 				var batteryData = devicesInfo[jObj.name]["battery"];
 				if (batteryData) {
@@ -207,16 +218,18 @@ function parseMessage(message) {
 					batteryData.oldTime = batteryData.newTime;
 					batteryData.newCharge = info[1];
 					batteryData.newTime = new Date().getTime();
-					var dischargeRate = (batteryData.newTime - batteryData.oldTime)
-							/ (batteryData.oldCharge - batteryData.newCharge);
-					var estimatedUptime = batteryData.newTime
-							- batteryData.startTime + batteryData.newCharge
-							* dischargeRate;
-					batteryData.previousEstimations.push(estimatedUptime);
-					var newEstimatedUptime = getAverage(batteryData.previousEstimations)
-							- (batteryData.newTime - batteryData.startTime);
-					// Save new estimated uptime
-					batteryData.estimatedUptime = newEstimatedUptime;
+					if (batteryData.oldCharge - batteryData.newCharge != 0) {
+						var dischargeRate = (batteryData.newTime - batteryData.oldTime)
+								/ (batteryData.oldCharge - batteryData.newCharge);
+						var estimatedUptime = batteryData.newTime
+								- batteryData.startTime + batteryData.newCharge
+								* dischargeRate;
+						batteryData.previousEstimations.push(estimatedUptime);
+						var newEstimatedUptime = getAverage(batteryData.previousEstimations)
+								- (batteryData.newTime - batteryData.startTime);
+						// Save new estimated uptime
+						batteryData.estimatedUptime = newEstimatedUptime;
+					}
 				} else {
 					devicesInfo[jObj.name].battery = {
 						oldCharge : null,
@@ -229,15 +242,20 @@ function parseMessage(message) {
 					}
 				}
 			} else { // it's a result
-				// decrement the jobs counter on the device
+				// update jobs counter on the device
+				var devicePendingJobs = jObj.message.split("/")[1].split(":")[1]
+						.trim();
+				devicePendingJobs = parseInt(devicePendingJobs);
 				if (devicesInfo[jObj.name]) {
-					devicesInfo[jObj.name].jobs = devicesInfo[jObj.name].jobs - 1;
+					devicesInfo[jObj.name].jobs = devicePendingJobs;
+					// console.log(jObj.name + " jobs pending: "
+					// + devicePendingJobs);
 				}
 				totalResultsReceived++;
 				$('p.total_results').html(
 						'Resultados recibidos: ' + totalResultsReceived)
 						.fadeIn();
-				console.log("Results Received: " + totalResultsReceived);
+				// console.log("Results Received: " + totalResultsReceived);
 			}
 		}
 	} else if (jObj.flag == 'exit') {
@@ -256,6 +274,10 @@ function parseMessage(message) {
 		var index = devicesArray.indexOf(jObj.name);
 		if (index > -1) {
 			devicesArray.splice(index, 1);
+			console.log(jObj.name + " deleted from array, remaining: "
+					+ devicesArray.length + " - Online: " + online_count);
+		} else {
+			console.log(jObj.name + " not found in devices array.");
 		}
 		appendChatMessage(li);
 	}
@@ -344,14 +366,15 @@ function sendMessageToServer(flag, message) {
 	// sending message to server
 	webSocket.send(json);
 	// increment the jobs counter on the device
-	if(devicesInfo[selectedDevice]){
-		devicesInfo[selectedDevice].jobs = devicesInfo[selectedDevice].jobs + 1;	
-	}	
+	if (devicesInfo[selectedDevice]) {
+		devicesInfo[selectedDevice].jobs = devicesInfo[selectedDevice].jobs + 1;
+	}
 }
 
 function generateJobs() {
 	// Create jobs if there are devices connected and not queued jobs
 	if (devicesArray.length > 0 && jobsList.length == 0) {
+		// console.log("Devices array size: " + devicesArray.length);
 		createRandomJobs();
 	}
 }
