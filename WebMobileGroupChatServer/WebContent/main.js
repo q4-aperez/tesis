@@ -199,7 +199,18 @@ function parseMessage(message) {
 			}
 			var trimmedInfo = info[0].trim();
 			if (trimmedInfo == "BogoMIPS" || trimmedInfo == "processor count") {
-				devicesInfo[jObj.name]["benchmark"] = info[1];
+				var mips = 0.0;
+				var processors = 1;
+				for (var i = 0, j = info.length; i < j; i++) {
+					console.log("info[i].trim().split('\n')"+info[i].trim().split("\n"));
+					if (info[i].trim().split("\n")[0] == "BogoMIPS"
+							|| info[i].trim().split("\n")[1] == "BogoMIPS") {
+						var currentMips = parseFloat(info[i + 1].trim().split(
+								"\n")[0]);
+						mips += currentMips;
+					}
+				}
+				devicesInfo[jObj.name]["benchmark"] = mips;
 			} else if (info[0] == "battery") {
 				var batteryData = devicesInfo[jObj.name]["battery"];
 				if (batteryData) {
@@ -210,26 +221,14 @@ function parseMessage(message) {
 					if (batteryData.oldCharge - batteryData.newCharge != 0) {
 						var dischargeRate = (batteryData.newTime - batteryData.oldTime)
 								/ (batteryData.oldCharge - batteryData.newCharge);
-						console.log("batteryData.newTime: "
-								+ batteryData.newTime);
-						console.log("batteryData.oldTime: "
-								+ batteryData.oldTime);
-						console.log("batteryData.oldCharge: "
-								+ batteryData.oldCharge);
-						console.log("batteryData.newCharge: "
-								+ batteryData.newCharge);
-						console.log("dischargeRate: " + dischargeRate);
 						var estimatedUptime = batteryData.newTime
 								- batteryData.startTime + batteryData.newCharge
 								* dischargeRate;
-						console.log("estimatedUptime: " + estimatedUptime);
 						batteryData.previousEstimations.push(estimatedUptime);
 						var newEstimatedUptime = getAverage(batteryData.previousEstimations)
 								- (batteryData.newTime - batteryData.startTime);
 						// Save new estimated uptime
 						batteryData.estimatedUptime = newEstimatedUptime;
-						console.log(jObj.name + " Estimated uptime: "
-								+ newEstimatedUptime);
 					}
 				} else {
 					devicesInfo[jObj.name].battery = {
