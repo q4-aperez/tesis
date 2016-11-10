@@ -4,6 +4,9 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import edu.aperez.gridapp.R;
 import edu.aperez.gridapp.job.Factorial;
 import edu.aperez.gridapp.job.Fibonacci;
@@ -75,7 +78,9 @@ public class JobsController implements JobsContract.Controller {
         protected void onPostExecute(Long result) {
             ConnectionService connectionService = mContext.getConnectionService();
             if (connectionService != null) {
-                connectionService.sendMessage(mUtils.getSendMessageJSON(mContext.getString(R.string.result, result)));
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+                Date resultDate = new Date();
+                connectionService.sendMessage(mUtils.getSendMessageJSON(mContext.getString(R.string.result, result) + "\nTime: " + simpleDateFormat.format(resultDate)));
             }
             if (mView.getJobsCount() == 0) {
                 mHasJobsPending = false;

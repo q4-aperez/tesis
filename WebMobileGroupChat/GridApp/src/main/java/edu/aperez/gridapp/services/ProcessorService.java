@@ -74,4 +74,11 @@ public class ProcessorService extends Service {
             return ProcessorService.this;
         }
     }
+
+    @Override
+    public void onDestroy() {
+        Intent intent = new Intent("edu.aperez.processor");
+        intent.putExtra("yourvalue", "torestore");
+        sendBroadcast(intent);
+    }
 }

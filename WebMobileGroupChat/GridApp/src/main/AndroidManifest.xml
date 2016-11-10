@@ -22,9 +22,20 @@
 
         <service android:name=".services.BatteryService" />
 
-        <receiver android:name=".services.ProcessorReceiver" />
+        <receiver android:name=".services.ProcessorReceiver" >
+            <intent-filter>
+                <action android:name="edu.aperez.processor" />
+            </intent-filter>
+        </receiver>
 
         <service android:name=".services.ConnectionService" />
+
+        <receiver android:name=".services.ConnectionStoppedReceiver" >
+            <intent-filter>
+                <action android:name="edu.aperez.groupchat" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

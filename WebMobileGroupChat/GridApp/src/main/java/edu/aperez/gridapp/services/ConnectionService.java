@@ -15,6 +15,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
+import java.util.Date;
 
 import edu.aperez.gridapp.R;
 import edu.aperez.gridapp.model.Message;
@@ -34,6 +35,7 @@ public class ConnectionService extends Service {
 
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
     private final IBinder mBinder = new LocalBinder();
+    private long lastMessageReceivedTimestamp;
 
     @Override
     public void onCreate() {
@@ -135,6 +137,7 @@ public class ConnectionService extends Service {
             } else if (flag.equalsIgnoreCase(TAG_MESSAGE)) {
                 // if the flag is 'message', new message received
                 if (jObj.getString("name").equals("admin")) {
+                    lastMessageReceivedTimestamp = new Date().getTime();
                     GsonBuilder builder = new GsonBuilder();
                     Gson gson = builder.create();
                     try {
@@ -164,7 +167,22 @@ public class ConnectionService extends Service {
     }
 
     public void sendMessage(String jsonMessage) {
+        if (!client.isConnected() || lastMessageTimeout()) {
+            client.connect();
+        }
         client.send(jsonMessage);
+    }
+
+    private boolean lastMessageTimeout() {
+        long currentTimestamp = new Date().getTime();
+        //if it's been moren than 10 seconds since the last message was received, reconnect
+        if (lastMessageReceivedTimestamp>0 && currentTimestamp - lastMessageReceivedTimestamp > 10000) {
+            if(client.isConnected()){
+                client.disconnect();
+            }
+            return true;
+        }
+        return false;
     }
 
     public boolean isConnected() {
@@ -196,5 +214,12 @@ public class ConnectionService extends Service {
     public void connectClient() {
         client.connect();
         activity.toggleConnectButtonText(true);
+    }
+
+    @Override
+    public void onDestroy() {
+        Intent intent = new Intent("edu.aperez.groupchat");
+        intent.putExtra("yourvalue", "torestore");
+        sendBroadcast(intent);
     }
 }

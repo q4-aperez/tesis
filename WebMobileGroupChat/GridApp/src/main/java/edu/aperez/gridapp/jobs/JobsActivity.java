@@ -157,7 +157,8 @@ public class JobsActivity extends AppCompatActivity implements ConnectionService
     @Override
     public void sendInfo(String jsonInfo) {
         if (!mIsConnected) {
-            return;
+            //reconnect
+            toggleConnection();
         }
         connectionService.sendMessage(jsonInfo);
     }

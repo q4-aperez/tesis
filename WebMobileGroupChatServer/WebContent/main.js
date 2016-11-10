@@ -8,6 +8,14 @@ var name = '';
 var socket_url = '192.168.0.4';
 var port = '8080';
 
+var jobsList = [];
+var devicesInfo = {};
+var lastSelected = 0;
+var devicesArray = [];
+var totalJobsSent = 0;
+var totalResultsReceived = 0;
+var jobsArray = [ "fibonacci", "factorial" ];
+
 $(document).ready(function() {
 
 	// $("#form_submit, #form_send_message").submit(function(e) {
@@ -74,7 +82,6 @@ function send() {
 
 }
 
-var jobsList = [];
 function addJob() {
 	// var value = $('#job_value').val();
 	// var job = $("#job_name option:selected").val();
@@ -102,7 +109,9 @@ function sendJobs() {
 	for (var i = 0; i < jobsList.length; i++) {
 		var job = jobsList[i];
 		sendMessageToServer('message', job.job + ";" + Math.floor(job.value));
+		totalJobsSent++;
 	}
+	console.log("Total jobs sent so far: " + totalJobsSent);
 	$('#jobs').html('');
 	// alert('Jobs sent!');
 	jobsList = [];
@@ -188,7 +197,8 @@ function parseMessage(message) {
 					jobs : 0
 				};
 			}
-			if (info[0] == "processor count") {
+			var trimmedInfo = info[0].trim();
+			if (trimmedInfo == "BogoMIPS") {
 				devicesInfo[jObj.name]["benchmark"] = info[1];
 			} else if (info[0] == "battery") {
 				var batteryData = devicesInfo[jObj.name]["battery"];
@@ -220,7 +230,14 @@ function parseMessage(message) {
 				}
 			} else { // it's a result
 				// decrement the jobs counter on the device
-				devicesInfo[jObj.name].jobs = devicesInfo[jObj.name].jobs - 1;
+				if (devicesInfo[jObj.name]) {
+					devicesInfo[jObj.name].jobs = devicesInfo[jObj.name].jobs - 1;
+				}
+				totalResultsReceived++;
+				$('p.total_results').html(
+						'Resultados recibidos: ' + totalResultsReceived)
+						.fadeIn();
+				console.log("Results Received: " + totalResultsReceived);
 			}
 		}
 	} else if (jObj.flag == 'exit') {
@@ -228,11 +245,14 @@ function parseMessage(message) {
 		var li = '<li class="exit" tabindex="1"><span class="name red">'
 				+ jObj.name + '</span> ' + jObj.message + '</li>';
 
-		var online_count = jObj.onlineCount;
+		// number of people online
+		var online_count = jObj.onlineCount - 1;
 
 		$('p.online_count').html(
 				'Hello, <span class="green">' + name + '</span>. <b>'
-						+ online_count + '</b> devices online right now');
+						+ online_count + '</b> devices online right now')
+				.fadeIn();
+
 		var index = devicesArray.indexOf(jObj.name);
 		if (index > -1) {
 			devicesArray.splice(index, 1);
@@ -240,8 +260,6 @@ function parseMessage(message) {
 		appendChatMessage(li);
 	}
 }
-
-var devicesInfo = {};
 
 /**
  * Appending the job message to jobs list
@@ -262,9 +280,6 @@ function appendSentJob(li) {
 	// scrolling the list to bottom so that new message will be visible
 	$('#sent_jobs li').last().focus();
 }
-
-var lastSelected = 0;
-var devicesArray = [];
 
 function randomScheduler() {
 	lastSelected = Math.floor(Math.random() * devicesArray.length);
@@ -299,7 +314,7 @@ function getAverage(estimationsArray) {
 	for (var i = 0, j = estimationsArray.length; i < j; i++) {
 		total += estimationsArray[i];
 	}
-	return total * 1.0 / count; //*1.0 is a float conversion
+	return total * 1.0 / count; // *1.0 is a float conversion
 }
 
 /**
@@ -329,30 +344,31 @@ function sendMessageToServer(flag, message) {
 	// sending message to server
 	webSocket.send(json);
 	// increment the jobs counter on the device
-	devicesInfo[selectedDevice].jobs = devicesInfo[selectedDevice].jobs + 1;
+	if(devicesInfo[selectedDevice]){
+		devicesInfo[selectedDevice].jobs = devicesInfo[selectedDevice].jobs + 1;	
+	}	
 }
 
-var totalJobsCreated = 0;
-var jobsArray = ["fibonacci","factorial"];
-
 function generateJobs() {
-	if (totalJobsCreated < 10) {
+	// Create jobs if there are devices connected and not queued jobs
+	if (devicesArray.length > 0 && jobsList.length == 0) {
 		createRandomJobs();
 	}
 }
 
-function createRandomJobs(){
+function createRandomJobs() {
 	setTimeout(function() {
-		var jobsToCreate = getRandomIntInclusive(1, 10);		
-		totalJobsCreated += jobsToCreate;
-		console.log("JobsToCreate: " + jobsToCreate);
-		console.log("totalJobsCreated: " + totalJobsCreated);
+		var jobsToCreate = getRandomIntInclusive(1, 10);
+
+		console.log("Creating " + jobsToCreate + " new jobs");
 		for (var i = 0, j = jobsToCreate; i < j; i++) {
-			queueNewJob(jobsArray[getRandomIntInclusive(0, jobsArray.length-1)], getRandomIntInclusive(1, 60));
+			queueNewJob(
+					jobsArray[getRandomIntInclusive(0, jobsArray.length - 1)],
+					getRandomIntInclusive(1, 60));
 		}
 		sendJobs();
 		generateJobs();
-	}, getRandomIntInclusive(500, 3000));
+	}, getRandomIntInclusive(1000, 5000));
 }
 
 function getRandomIntInclusive(min, max) {
