@@ -202,7 +202,6 @@ function parseMessage(message) {
 				var mips = 0.0;
 				var processors = 1;
 				for (var i = 0, j = info.length; i < j; i++) {
-					console.log("info[i].trim().split('\n')"+info[i].trim().split("\n"));
 					if (info[i].trim().split("\n")[0] == "BogoMIPS"
 							|| info[i].trim().split("\n")[1] == "BogoMIPS") {
 						var currentMips = parseFloat(info[i + 1].trim().split(
@@ -320,8 +319,11 @@ function seasScheduler() {
 	for (var i = 0, j = devicesArray.length; i < j; i++) {
 		var deviceName = devicesArray[i];
 		var deviceInfo = devicesInfo[deviceName];
-		var score = deviceInfo.battery.estimatedUptime * deviceInfo.benchmark
-				/ (deviceInfo.jobs + 1);
+		var score = 1;
+		if(deviceInfo && deviceInfo.battery && deviceInfo.battery.estimatedUptime && deviceInfo.benchmark){
+			score = deviceInfo.battery.estimatedUptime * deviceInfo.benchmark
+			/ (deviceInfo.jobs + 1);
+		}		
 		if (score > tempBest) {
 			tempBest = score;
 			tempName = deviceName;
