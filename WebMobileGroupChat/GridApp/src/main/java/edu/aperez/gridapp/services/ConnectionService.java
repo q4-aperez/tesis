@@ -15,6 +15,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Date;
 
 import edu.aperez.gridapp.R;
@@ -35,7 +36,8 @@ public class ConnectionService extends Service {
 
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
     private final IBinder mBinder = new LocalBinder();
-    private long lastMessageReceivedTimestamp;
+    private long lastPingReceivedTimestamp;
+    private ArrayList<String> pendingMessages;
 
     @Override
     public void onCreate() {
@@ -66,10 +68,17 @@ public class ConnectionService extends Service {
         /**
          * Creating web socket client. This will have callback methods
          * */
-        WebSocketClient client = new WebSocketClient(URI.create(WsConfig.URL_WEBSOCKET + name), new WebSocketClient.Listener() {
+        final WebSocketClient client = new WebSocketClient(URI.create(WsConfig.URL_WEBSOCKET + name), new WebSocketClient.Listener() {
             @Override
             public void onConnect() {
+                lastPingReceivedTimestamp = new Date().getTime();
                 activity.showSnackbar(R.string.socket_connected);
+                if (pendingMessages != null) {
+                    for (String pendingMessage : pendingMessages) {
+                        ConnectionService.this.client.send(pendingMessage);
+                    }
+                    pendingMessages.clear();
+                }
             }
 
             /**
@@ -104,7 +113,7 @@ public class ConnectionService extends Service {
 
         }, null);
 
-        client.connect();
+//        client.connect();
 
         return client;
     }
@@ -137,12 +146,15 @@ public class ConnectionService extends Service {
             } else if (flag.equalsIgnoreCase(TAG_MESSAGE)) {
                 // if the flag is 'message', new message received
                 if (jObj.getString("name").equals("admin")) {
-                    lastMessageReceivedTimestamp = new Date().getTime();
                     GsonBuilder builder = new GsonBuilder();
                     Gson gson = builder.create();
                     try {
                         Message message = gson.fromJson(jObj.toString(), Message.class);
-                        activity.updateClient(message);
+                        if (!message.getMessage().contains("ping")) {
+                            activity.updateClient(message);
+                        } else {
+                            lastPingReceivedTimestamp = new Date().getTime();
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -150,7 +162,7 @@ public class ConnectionService extends Service {
 
             }
 
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -167,17 +179,26 @@ public class ConnectionService extends Service {
     }
 
     public void sendMessage(String jsonMessage) {
-        if (!client.isConnected() || lastMessageTimeout()) {
+        if (!client.isConnected() || lastPingTimeout()) {
             client.connect();
+            queueMessage(jsonMessage);
+        } else {
+            client.send(jsonMessage);
         }
-        client.send(jsonMessage);
     }
 
-    private boolean lastMessageTimeout() {
+    private void queueMessage(String jsonMessage) {
+        if (pendingMessages == null) {
+            pendingMessages = new ArrayList<>();
+        }
+        pendingMessages.add(jsonMessage);
+    }
+
+    private boolean lastPingTimeout() {
         long currentTimestamp = new Date().getTime();
-        //if it's been moren than 10 seconds since the last message was received, reconnect
-        if (lastMessageReceivedTimestamp>0 && currentTimestamp - lastMessageReceivedTimestamp > 10000) {
-            if(client.isConnected()){
+        //if it's been moren than 60 seconds since the last message was received, reconnect
+        if (lastPingReceivedTimestamp > 0 && currentTimestamp - lastPingReceivedTimestamp > 60000) {
+            if (client.isConnected()) {
                 client.disconnect();
             }
             return true;

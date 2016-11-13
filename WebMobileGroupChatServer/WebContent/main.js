@@ -5,7 +5,7 @@ var sessionId = '';
 var name = '';
 
 // socket connection url and port
-var socket_url = '192.168.1.24';
+var socket_url = '192.168.0.4';
 var port = '8080';
 
 var jobsList = [];
@@ -273,11 +273,12 @@ function parseMessage(message) {
 		var index = devicesArray.indexOf(jObj.name);
 		if (index > -1) {
 			devicesArray.splice(index, 1);
-			console.log(jObj.name + " deleted from array, remaining: "
-					+ devicesArray.length + " - Online: " + online_count);
-		} else {
-			console.log(jObj.name + " not found in devices array.");
+//			console.log(jObj.name + " deleted from array, remaining: "
+//					+ devicesArray.length + " - Online: " + online_count);
 		}
+//		else {
+//			console.log(jObj.name + " not found in devices array.");
+//		}
 		appendChatMessage(li);
 	}
 }
@@ -303,7 +304,8 @@ function appendSentJob(li) {
 }
 
 function randomScheduler() {
-	lastSelected = Math.floor(Math.random() * devicesArray.length);
+	var max = Math.ceil(devicesArray.length);
+	lastSelected = Math.floor(Math.random() * max);
 	var deviceName = devicesArray[lastSelected];
 	return deviceName;
 }
@@ -379,6 +381,26 @@ function generateJobs() {
 		// console.log("Devices array size: " + devicesArray.length);
 		createRandomJobs();
 	}
+	//Set ping timer to check for device connections every 45 seconds
+	setInterval(function(){
+		for(var i=0,j=devicesArray.length;i<j;i++){
+			// preparing json object
+			var myObject = {};
+			myObject.sessionId = sessionId;
+			myObject.message = devicesArray[i] + "@ping";
+			myObject.flag = 'message';
+
+			// converting json object to json string
+			json = JSON.stringify(myObject);
+
+			// sending message to server
+			if (webSocket == undefined || webSocket.readyState == WebSocket.CLOSED) {
+				openSocket();
+			} else if(webSocket.readyState == WebSocket.OPEN){
+				webSocket.send(json);	
+			}			
+		}
+	}, 45000);
 }
 
 function createRandomJobs() {

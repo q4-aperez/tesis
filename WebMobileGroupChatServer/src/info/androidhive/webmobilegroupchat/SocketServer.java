@@ -29,6 +29,9 @@ public class SocketServer {
 	// Mapping between session and person name
 	private static final HashMap<String, String> nameSessionPair = new HashMap<String, String>();
 
+	// Admin session
+	private Session adminSession;
+
 	private JSONUtils jsonUtils = new JSONUtils();
 
 	// Getting query params
@@ -85,6 +88,9 @@ public class SocketServer {
 
 			// Mapping client name and session id
 			nameSessionPair.put(session.getId(), name);
+			if (name.equals("admin")) {
+				adminSession = session;
+			}
 		}
 
 		// Adding session to session list
@@ -123,7 +129,7 @@ public class SocketServer {
 			e.printStackTrace();
 		}
 
-		// Sending the message to all clients
+		// Sending the message to a specific client
 		if (msg.contains("@")) {
 			String[] messageParts = msg.split("@");
 			String destination = messageParts[0];
@@ -136,17 +142,41 @@ public class SocketServer {
 							messageToSend);
 
 					try {
-						System.out.println("Sending Message To: " + session.getId() + ", " + json);
+						System.out.println("Sending Message to device: " + session.getId() + ", " + json);
 
 						s.getBasicRemote().sendText(json);
 					} catch (IOException e) {
 						System.out.println("error in sending. " + s.getId() + ", " + e.getMessage());
 						e.printStackTrace();
 					}
+					break;
 				}
 			}
 		} else {
-			sendMessageToAll(session.getId(), nameSessionPair.get(session.getId()), msg, false, false);
+			// Sending the message to server admin
+			try {
+				if (adminSession == null) {
+					setAdminSession();
+				}
+				if (adminSession.isOpen()) {
+					String json = jsonUtils.getSendAllMessageJson(session.getId(), nameSessionPair.get(session.getId()),
+							msg);
+					adminSession.getBasicRemote().sendText(json);
+					System.out.println("Sending Message to admin: " + session.getId() + ", " + json);
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void setAdminSession() {
+		for (Session s : sessions) {
+			if (nameSessionPair.get(s.getId()).equals("admin")) {
+				adminSession = s;
+				break;
+			}
 		}
 	}
 
