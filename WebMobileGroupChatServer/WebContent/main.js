@@ -92,6 +92,27 @@ function addJob() {
 	// alert('Please enter a value for the job!');
 	// }
 	generateJobs();
+	// Set ping timer to check for device connections every 45 seconds
+	setInterval(function() {
+		for (var i = 0, j = devicesArray.length; i < j; i++) {
+			// preparing json object
+			var myObject = {};
+			myObject.sessionId = sessionId;
+			myObject.message = devicesArray[i] + "@ping";
+			myObject.flag = 'message';
+
+			// converting json object to json string
+			json = JSON.stringify(myObject);
+
+			// sending message to server
+			if (webSocket == undefined
+					|| webSocket.readyState == WebSocket.CLOSED) {
+				openSocket();
+			} else if (webSocket.readyState == WebSocket.OPEN) {
+				webSocket.send(json);
+			}
+		}
+	}, 45000);
 }
 
 function queueNewJob(job, value) {
@@ -258,9 +279,15 @@ function parseMessage(message) {
 			}
 		}
 	} else if (jObj.flag == 'exit') {
+		var theTime = new Date();
+		var minutes = theTime.getMinutes() < 10 ? "0" + theTime.getMinutes()
+				: theTime.getMinutes();
+		var disconnectTime = theTime.getHours() + ":" + minutes;
+
 		// if the json flag is 'exit', it means somebody left the grid
 		var li = '<li class="exit" tabindex="1"><span class="name red">'
-				+ jObj.name + '</span> ' + jObj.message + '</li>';
+				+ jObj.name + '</span> ' + jObj.message + ' at '
+				+ disconnectTime + '</li>';
 
 		// number of people online
 		var online_count = jObj.onlineCount - 1;
@@ -273,13 +300,9 @@ function parseMessage(message) {
 		var index = devicesArray.indexOf(jObj.name);
 		if (index > -1) {
 			devicesArray.splice(index, 1);
-//			console.log(jObj.name + " deleted from array, remaining: "
-//					+ devicesArray.length + " - Online: " + online_count);
 		}
-//		else {
-//			console.log(jObj.name + " not found in devices array.");
-//		}
 		appendChatMessage(li);
+		console.log(jObj.name + " disconnected at " + disconnectTime);
 	}
 }
 
@@ -310,7 +333,7 @@ function randomScheduler() {
 	return deviceName;
 }
 
-function roundRobinScheduler() {	
+function roundRobinScheduler() {
 	lastSelected = (lastSelected + 1) % devicesArray.length;
 	var deviceName = devicesArray[lastSelected];
 	return deviceName;
@@ -322,10 +345,11 @@ function seasScheduler() {
 		var deviceName = devicesArray[i];
 		var deviceInfo = devicesInfo[deviceName];
 		var score = 1;
-		if(deviceInfo && deviceInfo.battery && deviceInfo.battery.estimatedUptime && deviceInfo.benchmark){
+		if (deviceInfo && deviceInfo.battery
+				&& deviceInfo.battery.estimatedUptime && deviceInfo.benchmark) {
 			score = deviceInfo.battery.estimatedUptime * deviceInfo.benchmark
-			/ (deviceInfo.jobs + 1);
-		}		
+					/ (deviceInfo.jobs + 1);
+		}
 		if (score > tempBest) {
 			tempBest = score;
 			tempName = deviceName;
@@ -381,26 +405,6 @@ function generateJobs() {
 		// console.log("Devices array size: " + devicesArray.length);
 		createRandomJobs();
 	}
-	//Set ping timer to check for device connections every 45 seconds
-	setInterval(function(){
-		for(var i=0,j=devicesArray.length;i<j;i++){
-			// preparing json object
-			var myObject = {};
-			myObject.sessionId = sessionId;
-			myObject.message = devicesArray[i] + "@ping";
-			myObject.flag = 'message';
-
-			// converting json object to json string
-			json = JSON.stringify(myObject);
-
-			// sending message to server
-			if (webSocket == undefined || webSocket.readyState == WebSocket.CLOSED) {
-				openSocket();
-			} else if(webSocket.readyState == WebSocket.OPEN){
-				webSocket.send(json);	
-			}			
-		}
-	}, 45000);
 }
 
 function createRandomJobs() {
