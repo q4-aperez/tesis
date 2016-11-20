@@ -215,7 +215,8 @@ function parseMessage(message) {
 				devicesInfo[jObj.name] = {
 					benchmark : null,
 					battery : null,
-					jobs : 0
+					jobs : 0,
+					totalJobs : 0
 				};
 			}
 			var trimmedInfo = info[0].trim();
@@ -234,11 +235,11 @@ function parseMessage(message) {
 			} else if (info[0] == "battery") {
 				var batteryData = devicesInfo[jObj.name]["battery"];
 				if (batteryData) {
-					batteryData.oldCharge = batteryData.newCharge;
-					batteryData.oldTime = batteryData.newTime;
-					batteryData.newCharge = info[1];
-					batteryData.newTime = new Date().getTime();
-					if (batteryData.oldCharge - batteryData.newCharge != 0) {
+					if (batteryData.newCharge - info[1] != 0) {
+						batteryData.oldCharge = batteryData.newCharge;
+						batteryData.oldTime = batteryData.newTime;
+						batteryData.newCharge = info[1];
+						batteryData.newTime = new Date().getTime();
 						var dischargeRate = (batteryData.newTime - batteryData.oldTime)
 								/ (batteryData.oldCharge - batteryData.newCharge);
 						var estimatedUptime = batteryData.newTime
@@ -248,6 +249,9 @@ function parseMessage(message) {
 						var newEstimatedUptime = getAverage(batteryData.previousEstimations)
 								- (batteryData.newTime - batteryData.startTime);
 						// Save new estimated uptime
+						if (newEstimatedUptime < 0) {
+							console.log("Estimated uptime remaining is NEGATIVE!!");
+						}
 						batteryData.estimatedUptime = newEstimatedUptime;
 					}
 				} else {
@@ -268,8 +272,9 @@ function parseMessage(message) {
 				devicePendingJobs = parseInt(devicePendingJobs);
 				if (devicesInfo[jObj.name]) {
 					devicesInfo[jObj.name].jobs = devicePendingJobs;
-					// console.log(jObj.name + " jobs pending: "
-					// + devicePendingJobs);
+					devicesInfo[jObj.name].totalJobs = devicesInfo[jObj.name].totalJobs + 1;
+					// console.log(jObj.name + " jobs executed: "
+					// + devicesInfo[jObj.name].totalJobs);
 				}
 				totalResultsReceived++;
 				$('p.total_results').html(
@@ -303,6 +308,18 @@ function parseMessage(message) {
 		}
 		appendChatMessage(li);
 		console.log(jObj.name + " disconnected at " + disconnectTime);
+		if (devicesInfo[jObj.name]) {
+			console.log(jObj.name + " executed jobs: "
+					+ devicesInfo[jObj.name].totalJobs);
+		}
+		if (devicesInfo[jObj.name] && devicesInfo[jObj.name].battery
+				&& devicesInfo[jObj.name].battery.estimatedUptime
+				&& devicesInfo[jObj.name].benchmark) {
+			var score = devicesInfo[jObj.name].battery.estimatedUptime
+					* devicesInfo[jObj.name].benchmark
+					/ (devicesInfo[jObj.name].jobs + 1)
+			console.log(jObj.name + " current SEAS score: " + score);
+		}
 	}
 }
 
@@ -343,19 +360,42 @@ function seasScheduler() {
 	var tempBest = 0, tempName;
 	for (var i = 0, j = devicesArray.length; i < j; i++) {
 		var deviceName = devicesArray[i];
-		var deviceInfo = devicesInfo[deviceName];
-		var score = 1;
-		if (deviceInfo && deviceInfo.battery
-				&& deviceInfo.battery.estimatedUptime && deviceInfo.benchmark) {
-			score = deviceInfo.battery.estimatedUptime * deviceInfo.benchmark
-					/ (deviceInfo.jobs + 1);
-		}
-		if (score > tempBest) {
-			tempBest = score;
-			tempName = deviceName;
+		if (typeof deviceName != 'undefined') {
+			var deviceInfo = devicesInfo[deviceName];
+			var score = 1;
+			if (deviceInfo && deviceInfo.battery
+					&& deviceInfo.battery.estimatedUptime
+					&& deviceInfo.benchmark) {
+				// console
+				// .log(deviceName + " estimatedUptime: "
+				// + deviceInfo.battery.estimatedUptime
+				// + " benchmark: " + deviceInfo.benchmark
+				// + "jobs: " + deviceInfo.jobs);
+				score = deviceInfo.battery.estimatedUptime
+						* deviceInfo.benchmark / (deviceInfo.jobs + 1);
+				// console.log(deviceName + "score: " + score);
+			}
+			if (score > tempBest) {
+				tempBest = score;
+				tempName = deviceName;
+			}
 		}
 	}
-	return tempName;
+	if (typeof tempName != 'undefined') {
+		return tempName;
+	} else {
+		if (devicesArray.lenght > 0) {
+			console
+					.log("No data available for SEAS, returning first by default");
+			return devicesArray[0];
+		} else {
+			console
+					.log("No data available for SEAS and no devices, returning NULL");
+		}
+
+		return null;
+	}
+
 }
 
 function getAverage(estimationsArray) {
@@ -381,22 +421,25 @@ function sendMessageToServer(flag, message) {
 	} else if (scheduler == "seas") {
 		selectedDevice = seasScheduler();
 	}
+	if (typeof selectedDevice != 'undefined') {
+		// preparing json object
+		var myObject = {};
+		myObject.sessionId = sessionId;
+		myObject.message = selectedDevice + "@" + message;
+		myObject.flag = flag;
 
-	// preparing json object
-	var myObject = {};
-	myObject.sessionId = sessionId;
-	myObject.message = selectedDevice + "@" + message;
-	myObject.flag = flag;
+		// converting json object to json string
+		json = JSON.stringify(myObject);
 
-	// converting json object to json string
-	json = JSON.stringify(myObject);
-
-	// sending message to server
-	webSocket.send(json);
-	// increment the jobs counter on the device
-	if (devicesInfo[selectedDevice]) {
-		devicesInfo[selectedDevice].jobs = devicesInfo[selectedDevice].jobs + 1;
+		// sending message to server
+		webSocket.send(json);
+		// increment the jobs counter on the device
+		// if (devicesInfo[selectedDevice]) {
+		// devicesInfo[selectedDevice].jobs = devicesInfo[selectedDevice].jobs +
+		// 1;
+		// }
 	}
+
 }
 
 function generateJobs() {
@@ -411,7 +454,7 @@ function createRandomJobs() {
 	setTimeout(function() {
 		var jobsToCreate = getRandomIntInclusive(1, 10);
 
-		console.log("Creating " + jobsToCreate + " new jobs");
+		// console.log("Creating " + jobsToCreate + " new jobs");
 		for (var i = 0, j = jobsToCreate; i < j; i++) {
 			queueNewJob(
 					jobsArray[getRandomIntInclusive(0, jobsArray.length - 1)],
