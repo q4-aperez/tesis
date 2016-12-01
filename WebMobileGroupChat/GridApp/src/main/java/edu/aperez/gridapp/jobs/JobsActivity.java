@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.ActionBar;
@@ -32,6 +33,8 @@ public class JobsActivity extends AppCompatActivity implements ConnectionService
     private ProcessorService processorService;
     private BatteryService batteryService;
     private boolean mIsConnected;
+    private JobsFragment mJobsFragment;
+    private JobsController mJobsController;
 
     private ServiceConnection serverConnection = new ServiceConnection() {
 
@@ -80,8 +83,6 @@ public class JobsActivity extends AppCompatActivity implements ConnectionService
 
         }
     };
-    private JobsFragment mJobsFragment;
-    private JobsController mJobsController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -176,5 +177,9 @@ public class JobsActivity extends AppCompatActivity implements ConnectionService
         } else {
             connectionService.connectClient();
         }
+    }
+
+    public void initializeWebSocket(String serverIp){
+        connectionService.initializeWebSocket(serverIp, Build.MODEL.replaceAll(" ", ""));
     }
 }

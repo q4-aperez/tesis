@@ -45,7 +45,9 @@ public class ConnectionService extends Service {
 
         utils = new Utils(this);
 
-        client = initializeWebSocket(Build.MODEL.replaceAll(" ", ""));
+//        if (activity != null) {
+//            client = initializeWebSocket(Build.MODEL.replaceAll(" ", ""));
+//        }
     }
 
     @Override
@@ -64,11 +66,12 @@ public class ConnectionService extends Service {
         return mBinder;
     }
 
-    public WebSocketClient initializeWebSocket(String name) {
+    public void initializeWebSocket(String serverIp, String name) {
         /**
          * Creating web socket client. This will have callback methods
          * */
-        final WebSocketClient client = new WebSocketClient(URI.create(WsConfig.URL_WEBSOCKET + name), new WebSocketClient.Listener() {
+        String url = WsConfig.URL_WEBSOCKET.replace("$SERVER_IP$", serverIp);
+       client = new WebSocketClient(URI.create(url + name), new WebSocketClient.Listener() {
             @Override
             public void onConnect() {
                 lastPingReceivedTimestamp = new Date().getTime();
@@ -114,8 +117,6 @@ public class ConnectionService extends Service {
         }, null);
 
 //        client.connect();
-
-        return client;
     }
 
     /**
@@ -179,6 +180,10 @@ public class ConnectionService extends Service {
     }
 
     public void sendMessage(String jsonMessage) {
+        if (client == null) {
+            queueMessage(jsonMessage);
+            return;
+        }
         if (!client.isConnected() || lastPingTimeout()) {
             client.connect();
             queueMessage(jsonMessage);
@@ -207,7 +212,10 @@ public class ConnectionService extends Service {
     }
 
     public boolean isConnected() {
-        return client.isConnected();
+        if (client != null) {
+            return client.isConnected();
+        }
+        return false;
     }
 
     public interface ConnectionCallbacks {
@@ -233,8 +241,10 @@ public class ConnectionService extends Service {
     }
 
     public void connectClient() {
-        client.connect();
-        activity.toggleConnectButtonText(true);
+        if (client != null) {
+            client.connect();
+            activity.toggleConnectButtonText(true);
+        }
     }
 
     @Override

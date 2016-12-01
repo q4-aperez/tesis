@@ -10,6 +10,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -29,6 +31,7 @@ public class JobsFragment extends Fragment implements JobsContract.View {
     private ProgressBar mProgressBar;
     private TextView mConnectButton;
     private TextView mCurrentJob;
+    private EditText mServerIp;
 
     public static JobsFragment newInstance() {
 
@@ -51,6 +54,14 @@ public class JobsFragment extends Fragment implements JobsContract.View {
         mProgressBar = (ProgressBar) mRoot.findViewById(R.id.progress_bar);
         mConnectButton = (TextView) mRoot.findViewById(R.id.connect_button);
         mCurrentJob = (TextView) mRoot.findViewById(R.id.current_job_data);
+        mServerIp = (EditText) mRoot.findViewById(R.id.server_ip);
+        mRoot.findViewById(R.id.set_server_ip).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ((JobsActivity) getActivity()).initializeWebSocket(mServerIp.getText().toString());
+            }
+        });
+
         setupJobsList();
 
         mConnectButton.setOnClickListener(new View.OnClickListener() {
@@ -93,7 +104,7 @@ public class JobsFragment extends Fragment implements JobsContract.View {
         if (job != null) {
             mProgressBar.setVisibility(View.VISIBLE);
             mCurrentJob.setText(getString(R.string.job_data, job.getJob(), job.getValue()));
-        }else{
+        } else {
             mProgressBar.setVisibility(View.GONE);
             mCurrentJob.setText(R.string.none);
         }
