@@ -4,6 +4,8 @@ import android.text.TextUtils;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Calendar;
+
 /**
  * Created by alexperez on 14/04/2016.
  */
@@ -20,6 +22,13 @@ public class Message {
 
     private String job;
     private String value;
+    private Long receivedTime;
+    private Long finishedTime;
+    private Long startTime;
+
+    public Message() {
+        receivedTime = Calendar.getInstance().getTime().getTime();
+    }
 
     public String getFlag() {
         return flag;
@@ -54,7 +63,7 @@ public class Message {
     }
 
     public String getJob() {
-        if(TextUtils.isEmpty(job)) {
+        if (TextUtils.isEmpty(job)) {
             String[] data = message.split(";");
             job = data[0];
         }
@@ -66,7 +75,7 @@ public class Message {
     }
 
     public String getValue() {
-        if(TextUtils.isEmpty(value)) {
+        if (TextUtils.isEmpty(value)) {
             String[] data = message.split(";");
             value = data[1];
         }
@@ -75,5 +84,31 @@ public class Message {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public Long getWaitTime() {
+        if (finishedTime != null) {
+            return finishedTime - receivedTime;
+        } else {
+            Long currentTime = Calendar.getInstance().getTime().getTime();
+            return currentTime - receivedTime;
+        }
+    }
+
+    public Long getExecutionTime() {
+        if (finishedTime != null) {
+            return finishedTime - startTime;
+        } else {
+            Long currentTime = Calendar.getInstance().getTime().getTime();
+            return currentTime - startTime;
+        }
+    }
+
+    public void setFinishedTime(Long finishedTime) {
+        this.finishedTime = finishedTime;
+    }
+
+    public void setStartTime(Long startTime) {
+        this.startTime = startTime;
     }
 }

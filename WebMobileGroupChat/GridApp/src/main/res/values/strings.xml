@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Grid App</string>
-    <string name="result">Result: %1$d / Pending jobs: %2$d / Time: %3$s</string>
+    <string name="result">Result: %1$d / Pending jobs: %2$d / Time: %3$s / Wait Time: %4$d / Execution Time: %5$d</string>
     <string name="job_data">%1$s with value %2$s</string>
     <string name="none">None</string>
     <string name="current_job">Current job</string>

@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 import edu.aperez.gridapp.R;
@@ -59,10 +60,13 @@ public class JobsController implements JobsContract.Controller {
     }
 
     private class ExecuteJob extends AsyncTask<Message, Void, Long> {
+        private Message job;
+
         @Override
         protected Long doInBackground(Message... messages) {
-            Message job = messages[0];
+            job = messages[0];
             Long result = 0L;
+            job.setStartTime(Calendar.getInstance().getTime().getTime());
             switch (job.getJob().toLowerCase()) {
                 case Constants.FIBONACCI:
                     result = new Fibonacci().calculate(Integer.valueOf(job.getValue()));
@@ -76,11 +80,17 @@ public class JobsController implements JobsContract.Controller {
 
         @Override
         protected void onPostExecute(Long result) {
+            job.setFinishedTime(Calendar.getInstance().getTime().getTime());
             ConnectionService connectionService = mContext.getConnectionService();
             if (connectionService != null) {
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
                 Date resultDate = new Date();
-                String message = mContext.getString(R.string.result, result,mView.getJobsCount(),simpleDateFormat.format(resultDate));
+                String message = mContext.getString(R.string.result,
+                        result,
+                        mView.getJobsCount(),
+                        simpleDateFormat.format(resultDate),
+                        job.getWaitTime(),
+                        job.getExecutionTime());
                 connectionService.sendMessage(mUtils.getSendMessageJSON(message));
             }
             if (mView.getJobsCount() == 0) {
